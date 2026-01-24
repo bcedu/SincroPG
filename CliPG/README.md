@@ -17,13 +17,13 @@
 
 #### Mètodes
 
-| Mètode                                                                | Retorn / Paràmetres | Descripció                                                                   |
-| --------------------------------------------------------------------- | ------------------- | ---------------------------------------------------------------------------- |
-| `new(nom: &str, local_folder: &str) -> Self`                          | `Videojoc`          | Constructor amb nom i carpeta local.                                         |
-| `load_partides_locals()`                                               | `()`                | Llegeix les partides de disc i les posa a `partides_locals`.                        |
-| `fetch_partides_remotes(api: &SerPGAPI)`                              | `()`                | Demana al servidor les partides d’aquest joc i les posa a `partides_remotes`. |
-| `sync(api: &SerPGAPI)`                                               | `()`                | Sincronitza les partides locals amb les del servidor.                        |
-| `resolve_conflict(local: &PartidaGuardada, server: &PartidaGuardada)` | `()`                | Gestiona conflictes (p. ex. renombrar i guardar les dues).                   |
+| Fet | Mètode                                                                | Retorn / Paràmetres                                                   | Descripció                                                                   |
+|-----|-----------------------------------------------------------------------|-----------------------------------------------------------------------| ---------------------------------------------------------------------------- |
+| ✅   | `new(nom: &str, local_folder: &str) -> Self`                          | `Videojoc`                                                            | Constructor amb nom i carpeta local.                                         |
+| ✅   | `load_partides_locals()`                                              | `()`                                                                  | Llegeix les partides de disc i les posa a `partides_locals`.                        |
+| x   | `fetch_partides_remotes(api: &SerPGAPI)`                              | `()`                                                                  | Demana al servidor les partides d’aquest joc i les posa a `partides_remotes`. |
+| x   | `sync(api: &SerPGAPI)`                                                | `()`                                                                  | Sincronitza les partides locals amb les del servidor.                        |
+| x   | `resolve_conflict(local: &PartidaGuardada, server: &PartidaGuardada)` | `()`                | Gestiona conflictes (p. ex. renombrar i guardar les dues).                   |
 
 ---
 
@@ -34,18 +34,18 @@
 #### Atributs
 
 | Atribut     | Tipus    | Descripció                                      |
-| ----------- | -------- | ----------------------------------------------- |
+| ----------- |----------| ----------------------------------------------- |
 | `nom`       | `String` | Nom de la partida.                              |
 | `path`      | `String` | Ruta completa del fitxer local.                 |
-| `timestamp` | `u64`    | Última modificació (per comparar amb servidor). |
+| `timestamp` | `u32`    | Última modificació (per comparar amb servidor). |
 | `hash`      | `String` | Hash de contingut per detectar canvis.          |
 
 #### Mètodes
 
-| Mètode                    | Retorn / Paràmetres | Descripció                                                 |
-| ------------------------- | ------------------- | ---------------------------------------------------------- |
-| `new(path: &str) -> Self` | `PartidaGuardada`   | Crea una instància llegint metadata (timestamp, hash).     |
-| `update_metadata()`       | `()`                | Torna a calcular timestamp i hash si el fitxer ha canviat. |
+| Fet | Mètode                    | Retorn / Paràmetres | Descripció                                                 |
+|-----| ------------------------- | ------------------- | ---------------------------------------------------------- |
+| ✅   | `new(path: &str) -> Self` | `PartidaGuardada`   | Crea una instància llegint metadata (timestamp, hash).     |
+| ✅   | `update_metadata()`      | `()`                | Torna a calcular timestamp i hash si el fitxer ha canviat. |
 
 ---
 
