@@ -3,19 +3,20 @@ use std::path::PathBuf;
 use std::fs;
 use normalized_hash::Hasher;
 use filetime::FileTime;
+use crate::ser_pg_api::PartidesGuardadesAPI;
 use crate::videojoc::Videojoc;
 
-pub struct PartidaGuarda {
+pub struct PartidaGuardada {
     pub nom: OsString,
     pub path: PathBuf,
     pub timestamp: u32,
     pub hash: String
 }
 
-impl PartidaGuarda {
+impl PartidaGuardada {
     pub fn new(path: String) -> Self {
         let full_path = PathBuf::from(path.clone());
-        PartidaGuarda {
+        PartidaGuardada {
             nom: full_path.file_name().unwrap_or_else(|| { panic!("La ruta {path} no és correcte!") }).to_os_string(),
             hash: Hasher::new().hash_file(&full_path, None::<PathBuf>),
             path: full_path,
@@ -28,6 +29,13 @@ impl PartidaGuarda {
         self.timestamp = FileTime::from_last_modification_time(&fs::metadata(&self.path).unwrap()).nanoseconds();
     }
 
+    pub fn pujar_partida_guardada<A: PartidesGuardadesAPI>(&self, api: &A) {
+        api.post_partida_guardada(&self);
+    }
+
+    pub fn descarregar_partida_guardada<A: PartidesGuardadesAPI>(&self, api: &A) {
+        // TODO
+    }
 }
 
 
@@ -39,8 +47,8 @@ mod tests {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/path a videojocs/Total War 40k/save1.txt").to_str().unwrap().to_string()
     }
 
-    fn get_partida_w40k_s1() -> PartidaGuarda {
-        PartidaGuarda::new(get_partida_path_w40k_s1())
+    fn get_partida_w40k_s1() -> PartidaGuardada {
+        PartidaGuardada::new(get_partida_path_w40k_s1())
     }
     #[test]
     fn test_new() {

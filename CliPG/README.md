@@ -8,22 +8,22 @@
 
 #### Atributs
 
-| Atribut           | Tipus                  | Descripció                                         |
-| ----------------- | ---------------------- | -------------------------------------------------- |
-| `nom`             | `String`               | Nom del joc.                                       |
-| `local_folder`    | `String`               | Carpeta local on estan les partides d’aquest joc.  |
-| `partides_locals` | `Vec<PartidaGuardada>` | Llista de partides locals.                         |
+| Atribut            | Tipus                  | Descripció                                         |
+|--------------------|------------------------|----------------------------------------------------|
+| `nom`              | `String`               | Nom del joc.                                       |
+| `local_folder`     | `String`               | Carpeta local on estan les partides d’aquest joc.  |
+| `partides_locals`  | `Vec<PartidaGuardada>` | Llista de partides locals.                         |
 | `partides_remotes` | `Vec<PartidaGuardada>` | Partides que hi ha al servidor (per sincronitzar). |
 
 #### Mètodes
 
-| Fet | Mètode                                                                | Retorn / Paràmetres                                                   | Descripció                                                                   |
-|-----|-----------------------------------------------------------------------|-----------------------------------------------------------------------| ---------------------------------------------------------------------------- |
-| ✅   | `new(nom: &str, local_folder: &str) -> Self`                          | `Videojoc`                                                            | Constructor amb nom i carpeta local.                                         |
-| ✅   | `load_partides_locals()`                                              | `()`                                                                  | Llegeix les partides de disc i les posa a `partides_locals`.                        |
-| x   | `fetch_partides_remotes(api: &SerPGAPI)`                              | `()`                                                                  | Demana al servidor les partides d’aquest joc i les posa a `partides_remotes`. |
-| x   | `sync(api: &SerPGAPI)`                                                | `()`                                                                  | Sincronitza les partides locals amb les del servidor.                        |
-| x   | `resolve_conflict(local: &PartidaGuardada, server: &PartidaGuardada)` | `()`                | Gestiona conflictes (p. ex. renombrar i guardar les dues).                   |
+| Fet | Mètode                                                                  | Retorn / Paràmetres                                                   | Descripció                                                                   |
+|---|-------------------------------------------------------------------------|-----------------------------------------------------------------------| ---------------------------------------------------------------------------- |
+| ✅ | `new(nom: &str, local_folder: &str) -> Self`                            | `Videojoc`                                                            | Constructor amb nom i carpeta local.                                         |
+| ✅ | `load_partides_locals()`                                                | `()`                                                                  | Llegeix les partides de disc i les posa a `partides_locals`.                        |
+| ✅  | `fetch_partides_remotes(api: &SerPGAPI)`                                | `()`                                                                  | Demana al servidor les partides d’aquest joc i les posa a `partides_remotes`. |
+| ✅  | `sync(api: &SerPGAPI)`                                                  | `()`                                                                  | Sincronitza les partides locals amb les del servidor.                        |
+| x | `resoldre_conflicte(local: &PartidaGuardada, server: &PartidaGuardada)` | `()`                | Gestiona conflictes (p. ex. renombrar i guardar les dues).                   |
 
 ---
 
@@ -42,10 +42,12 @@
 
 #### Mètodes
 
-| Fet | Mètode                    | Retorn / Paràmetres | Descripció                                                 |
-|-----| ------------------------- | ------------------- | ---------------------------------------------------------- |
-| ✅   | `new(path: &str) -> Self` | `PartidaGuardada`   | Crea una instància llegint metadata (timestamp, hash).     |
-| ✅   | `update_metadata()`      | `()`                | Torna a calcular timestamp i hash si el fitxer ha canviat. |
+| Fet | Mètode                                        | Retorn / Paràmetres | Descripció                                                  |
+|-----|-----------------------------------------------| ------------------- |-------------------------------------------------------------|
+| ✅   | `new(path: &str) -> Self`                     | `PartidaGuardada`   | Crea una instància llegint metadata (timestamp, hash).      |
+| ✅   | `update_metadata()`                           | `()`                | Torna a calcular timestamp i hash si el fitxer ha canviat.  |
+| ✅   | `pujar_partida_guardada(api: SerPGAPI)`       | `()`                | Puja la partida guardada al servidor.                       |
+| x   | `descarregar_partida_guardada(api: SerPGAPI)` | `()`                | Es descarrega la partida guardada del servidor i la guarda. |
 
 ---
 
@@ -62,14 +64,14 @@
 
 #### Mètodes
 
-| Mètode                         | Retorn / Paràmetres | Descripció                                                                     |
-| ------------------------------ | ------------------- | ------------------------------------------------------------------------------ |
-| `new(api: SerPGAPI) -> Self`  | `CliPG`               | Constructor amb l’API.                                                         |
-| `default() -> Self`            | `CliPG`               | Constructor per defecte (pots cridar `get_credentials()`).                     |
-| `load_local_jocs()`            | `()`                | Carrega tots els jocs locals (crea instàncies `Videojoc` amb la seva carpeta). |
-| `sync_all()`                   | `()`                | Sincronitza tots els jocs.                                                     |
-| `sync_joc(joc: &mut Videojoc)` | `()`                | Sincronitza un joc concret amb el servidor.                                    |
-| `show_status()`                | `()`                | Mostra estat global de sincronització.                                         |
+| Fet | Mètode                         | Retorn / Paràmetres | Descripció                                                                     |
+|-----|--------------------------------| ------------------- | ------------------------------------------------------------------------------ |
+| x   | `new(api: SerPGAPI) -> Self`   | `CliPG`               | Constructor amb l’API.                                                         |
+| x   | `default() -> Self`            | `CliPG`               | Constructor per defecte (pots cridar `get_credentials()`).                     |
+| x   | `load_local_jocs()`            | `()`                | Carrega tots els jocs locals (crea instàncies `Videojoc` amb la seva carpeta). |
+| x   | `sync_all()`                   | `()`                | Sincronitza tots els jocs.                                                     |
+| x   | `sync_joc(joc: &mut Videojoc)` | `()`           | Sincronitza un joc concret amb el servidor.                                    |
+| x   | `show_status()`                | `()`                           | Mostra estat global de sincronització.                                         |
 
 ### SerPGAPI (struct)
 
@@ -85,11 +87,11 @@
 
 #### Mètodes
 
-| Mètode                                            | Retorn / Paràmetres | Descripció                                                                    |
-|---------------------------------------------------|---------------------| ----------------------------------------------------------------------------- |
-| `new(usuari: String, contrassenya: String) -> Self` | `SerPGAPI`         | Constructor.                                                         |
-
-TODO...
+| Fet | Mètode                                                                            | Retorn / Paràmetres    | Descripció                                                                        |
+|-----|-----------------------------------------------------------------------------------|------------------------|-----------------------------------------------------------------------------------|
+| x   | `new(usuari: String, contrassenya: String) -> Self`                               | `SerPGAPI`             | Constructor.                                                                      |
+| x   | `get_partides_guardades(videojoc: String) -> Vec<PartidaGuardada>`                | `Vec<PartidaGuardada>` | Obté les partides guardades del servidor per el videojoc que es digui `videojoc`. |
+| x   | `post_partida_guardada(partida_guardada: &PartidaGuardada)` | `()`                   | Puja la partida guardada al servidor.                                             |
 
 
 ### Notes Generals
