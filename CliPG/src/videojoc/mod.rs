@@ -5,6 +5,7 @@ use partida_guardada::*;
 use crate::ser_pg_api::{PartidesGuardadesAPI, SerPGAPI};
 use std::path::PathBuf;
 use std::ffi::OsString;
+use std::fs;
 use chrono::Local;
 
 pub struct Videojoc {
@@ -131,7 +132,7 @@ impl Videojoc {
     pub fn resoldre_conflicte<A: PartidesGuardadesAPI>(&self, local: &PartidaGuardada, remot: &PartidaGuardada, api: &A) {
         // Donarem prioritat al que tingui el timestamp mes recent. El que tingui el timestamp
         // mes antic es renombara posant a davant del nom "bck_yyyymmddhhss_"
-        let nou_nom = format!("bck_{0}_{1}", remot.nom.to_str().unwrap(), Local::now().format("%Y%m%d%H%M%S"));
+        let nou_nom = format!("bck_{0}_{1}", Local::now().format("%Y%m%d%H%M%S"), remot.nom.to_str().unwrap());
         if local.timestamp >= remot.timestamp {
             // Pujem la partida remot pero renombrada al servidor;
             let mut remot = PartidaGuardada::from_partida_guardada(remot);
@@ -143,14 +144,16 @@ impl Videojoc {
             // Creem una nova partida local amb el nom nou
             local.duplicar_fitxer(nou_nom);
             // Descarreguem la remota per actualitzar la original
-            api.get_partida_guardada(remot);
+            remot.descarregar_partida_guardada(api);
         }
     }
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
+    use std::fs::read_to_string;
     use super::*;
+    use crate::videojoc::partida_guardada::tests::get_partida_ntw_s1;
     pub struct FakeAPI;
     impl PartidesGuardadesAPI for FakeAPI {
         fn get_partides_guardades(&self, _: String) -> Vec<PartidaGuardada> {
@@ -239,11 +242,41 @@ mod tests {
         assert_eq!(resultat_esperat, resultat);
     }
     #[test]
-    fn test_resoldre_conflicte_timestamp_local_posterior() {
-
-    }
-    #[test]
-    fn test_resoldre_conflicte_timestamp_remot_posterior() {
-
+    fn test_resoldre_conflicte() {
+        let mut local = get_partida_ntw_s1();
+        let mut remot = get_partida_ntw_s1();
+        let videojoc = get_videojoc_w40k();
+        let api = get_fake_server();
+        let contingut_original = fs::read_to_string(local.path.as_path()).unwrap();
+        // Cas en que la local es la mes recent. No s'ha de crear cap fitxer local nou
+        local.timestamp = 1;
+        remot.timestamp = 0;
+        let nfitxers_abans = fs::read_dir(local.path.parent().unwrap()).iter().count();
+        assert_eq!(nfitxers_abans, 1);
+        videojoc.resoldre_conflicte(&local, &remot, &api);
+        let nfitxers_despres = fs::read_dir(local.path.parent().unwrap()).iter().count();
+        assert_eq!(nfitxers_despres, 1);
+        // Cas en que el remot es mes recent. Es farà una copia
+        local.timestamp = 0;
+        remot.timestamp = 1;
+        let nfitxers_abans = fs::read_dir(local.path.parent().unwrap()).iter().count();
+        assert_eq!(nfitxers_abans, 1);
+        videojoc.resoldre_conflicte(&local, &remot, &api);
+        let mut nfitxers_despres = 0;
+        for entry in fs::read_dir(local.path.parent().unwrap()).unwrap().flatten() {
+            nfitxers_despres += 1;
+            let path = entry.path();
+            if path.file_name().unwrap() != local.nom.to_str().unwrap() {
+                // Haurien de tindre el mateix contingut
+                let content2 = fs::read_to_string(&path).unwrap();
+                let content1 = fs::read_to_string(&local.path).unwrap();
+                assert_ne!(content1, content2);
+                assert_eq!(content2, contingut_original);
+                // Aprofitem per eliminarlo
+                fs::remove_file(path).unwrap();
+            }
+        }
+        assert_eq!(nfitxers_despres, 2);
+        fs::write(local.path.as_path(), contingut_original).unwrap();
     }
 }

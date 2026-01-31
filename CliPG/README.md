@@ -23,7 +23,7 @@
 | ✅     | `load_partides_locals()`                                                | `()`                                                                  | Llegeix les partides de disc i les posa a `partides_locals`.                        |
 | ✅     | `fetch_partides_remotes(api: &SerPGAPI)`                                | `()`                                                                  | Demana al servidor les partides d’aquest joc i les posa a `partides_remotes`. |
 | ✅     | `sync(api: &SerPGAPI)`                                                  | `()`                                                                  | Sincronitza les partides locals amb les del servidor.                        |
-| DOING | `resoldre_conflicte(local: &PartidaGuardada, server: &PartidaGuardada)` | `()`                | Gestiona conflictes (p. ex. renombrar i guardar les dues).                   |
+| ✅ | `resoldre_conflicte(local: &PartidaGuardada, server: &PartidaGuardada)` | `()`                | Gestiona conflictes (p. ex. renombrar i guardar les dues).                   |
 
 ---
 
