@@ -17,13 +17,13 @@
 
 #### Mètodes
 
-| Fet | Mètode                                                                  | Retorn / Paràmetres                                                   | Descripció                                                                   |
-|---|-------------------------------------------------------------------------|-----------------------------------------------------------------------| ---------------------------------------------------------------------------- |
-| ✅ | `new(nom: &str, local_folder: &str) -> Self`                            | `Videojoc`                                                            | Constructor amb nom i carpeta local.                                         |
-| ✅ | `load_partides_locals()`                                                | `()`                                                                  | Llegeix les partides de disc i les posa a `partides_locals`.                        |
-| ✅  | `fetch_partides_remotes(api: &SerPGAPI)`                                | `()`                                                                  | Demana al servidor les partides d’aquest joc i les posa a `partides_remotes`. |
-| ✅  | `sync(api: &SerPGAPI)`                                                  | `()`                                                                  | Sincronitza les partides locals amb les del servidor.                        |
-| x | `resoldre_conflicte(local: &PartidaGuardada, server: &PartidaGuardada)` | `()`                | Gestiona conflictes (p. ex. renombrar i guardar les dues).                   |
+| Fet   | Mètode                                                                  | Retorn / Paràmetres                                                   | Descripció                                                                   |
+|-------|-------------------------------------------------------------------------|-----------------------------------------------------------------------| ---------------------------------------------------------------------------- |
+| ✅     | `new(nom: &str, local_folder: &str) -> Self`                            | `Videojoc`                                                            | Constructor amb nom i carpeta local.                                         |
+| ✅     | `load_partides_locals()`                                                | `()`                                                                  | Llegeix les partides de disc i les posa a `partides_locals`.                        |
+| ✅     | `fetch_partides_remotes(api: &SerPGAPI)`                                | `()`                                                                  | Demana al servidor les partides d’aquest joc i les posa a `partides_remotes`. |
+| ✅     | `sync(api: &SerPGAPI)`                                                  | `()`                                                                  | Sincronitza les partides locals amb les del servidor.                        |
+| DOING | `resoldre_conflicte(local: &PartidaGuardada, server: &PartidaGuardada)` | `()`                | Gestiona conflictes (p. ex. renombrar i guardar les dues).                   |
 
 ---
 
@@ -42,12 +42,14 @@
 
 #### Mètodes
 
-| Fet | Mètode                                        | Retorn / Paràmetres | Descripció                                                  |
-|----|-----------------------------------------------| ------------------- |-------------------------------------------------------------|
-| ✅  | `new(path: &str) -> Self`                     | `PartidaGuardada`   | Crea una instància llegint metadata (timestamp, hash).      |
-| ✅  | `update_metadata()`                           | `()`                | Torna a calcular timestamp i hash si el fitxer ha canviat.  |
-| ✅  | `pujar_partida_guardada(api: SerPGAPI)`       | `()`                | Puja la partida guardada al servidor.                       |
-| ✅   | `descarregar_partida_guardada(api: SerPGAPI)` | `()`                | Es descarrega la partida guardada del servidor i la guarda. |
+| Fet   | Mètode                                                              | Retorn / Paràmetres | Descripció                                                  |
+|-------|---------------------------------------------------------------------| ------------------- |-------------------------------------------------------------|
+| ✅     | `new(path: &str) -> Self`                                           | `PartidaGuardada`   | Crea una instància llegint metadata (timestamp, hash).      |
+| ✅     | `from_partida_guardada(partida_guardada: &PartidaGuardada) -> Self` | `PartidaGuardada`   | Crea una instància copiant les dades.                       |
+| ✅     | `update_metadata()`                                                 | `()`                | Torna a calcular timestamp i hash si el fitxer ha canviat.  |
+| ✅     | `pujar_partida_guardada(api: SerPGAPI)`                             | `()`                | Puja la partida guardada al servidor.                       |
+| ✅     | `descarregar_partida_guardada(api: SerPGAPI)`                       | `()`                | Es descarrega la partida guardada del servidor i la guarda. |
+| ✅ | `duplicar_fitxer(nou_nom: String)`                                  | `()`                | Duplica el fitxer de la partida local amb el nou nom.       |
 
 ---
 

@@ -5,6 +5,7 @@ use partida_guardada::*;
 use crate::ser_pg_api::{PartidesGuardadesAPI, SerPGAPI};
 use std::path::PathBuf;
 use std::ffi::OsString;
+use chrono::Local;
 
 pub struct Videojoc {
     nom: OsString,
@@ -112,7 +113,7 @@ impl Videojoc {
                         aux = format!("⚠️ Conflicte: {}", local.nom.to_str().unwrap().to_string());
                         println!("{}", aux);
                         if !test_mode {
-                            self.resoldre_conflicte(local, remote);
+                            self.resoldre_conflicte(local, remote, api);
                         }
                     }
                 }
@@ -127,15 +128,29 @@ impl Videojoc {
         resultat
     }
 
-    pub fn resoldre_conflicte(&self, local: &PartidaGuardada, remot: &PartidaGuardada) {
-        // TODO
+    pub fn resoldre_conflicte<A: PartidesGuardadesAPI>(&self, local: &PartidaGuardada, remot: &PartidaGuardada, api: &A) {
+        // Donarem prioritat al que tingui el timestamp mes recent. El que tingui el timestamp
+        // mes antic es renombara posant a davant del nom "bck_yyyymmddhhss_"
+        let nou_nom = format!("bck_{0}_{1}", remot.nom.to_str().unwrap(), Local::now().format("%Y%m%d%H%M%S"));
+        if local.timestamp >= remot.timestamp {
+            // Pujem la partida remot pero renombrada al servidor;
+            let mut remot = PartidaGuardada::from_partida_guardada(remot);
+            remot.nom = OsString::from(nou_nom);
+            api.post_partida_guardada(&remot);
+            // Pujem la partida local al servidor (aixo sobreescriu la que hi havia)
+            api.post_partida_guardada(&local);
+        }  else {
+            // Creem una nova partida local amb el nom nou
+            local.duplicar_fitxer(nou_nom);
+            // Descarreguem la remota per actualitzar la original
+            api.get_partida_guardada(remot);
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
     pub struct FakeAPI;
     impl PartidesGuardadesAPI for FakeAPI {
         fn get_partides_guardades(&self, _: String) -> Vec<PartidaGuardada> {
@@ -172,33 +187,27 @@ mod tests {
             }
         }
     }
-
     fn get_videojoc_path_w40k() -> String {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/path a videojocs/Total War 40k/").to_str().unwrap().to_string()
     }
-
     fn get_videojoc_w40k() -> Videojoc {
         Videojoc::new(get_videojoc_path_w40k())
     }
-
     pub fn get_fake_server() -> FakeAPI {
         FakeAPI
     }
-
     #[test]
     fn test_new() {
         let v = get_videojoc_w40k();
         assert_eq!(v.nom, "Total War 40k");
         assert_eq!(v.local_folder.to_str().unwrap(), get_videojoc_path_w40k());
     }
-
     #[test]
     fn test_with_nom() {
         let v = get_videojoc_w40k().with_nom("Pastanaga bullida".to_string());
         assert_eq!(v.nom, "Pastanaga bullida");
         assert_eq!(v.local_folder.to_str().unwrap(), get_videojoc_path_w40k());
     }
-
     #[test]
     fn test_load_partides_locals() {
         let mut v = get_videojoc_w40k();
@@ -209,7 +218,6 @@ mod tests {
         assert_eq!(v.partides_locals[1].nom, "save1.txt");
         assert_eq!(v.partides_locals[0].nom, "save2.txt");
     }
-
     #[test]
     fn test_fetch_partides_remotes() {
         let mut v = get_videojoc_w40k();
@@ -220,7 +228,6 @@ mod tests {
         assert_eq!(v.partides_remotes[1].nom, "save_test_2");
         assert_eq!(v.partides_remotes[2].nom, "save3.txt");
     }
-
     #[test]
     fn test_sync() {
         let mut v = get_videojoc_w40k();
@@ -230,5 +237,13 @@ mod tests {
 ⚠️ Conflicte: save3.txt
 ⬇️ Descarregar partida remota: save_test_2\n";
         assert_eq!(resultat_esperat, resultat);
+    }
+    #[test]
+    fn test_resoldre_conflicte_timestamp_local_posterior() {
+
+    }
+    #[test]
+    fn test_resoldre_conflicte_timestamp_remot_posterior() {
+
     }
 }

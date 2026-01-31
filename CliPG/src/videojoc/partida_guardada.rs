@@ -33,6 +33,15 @@ impl PartidaGuardada {
         }
     }
 
+    pub fn from_partida_guardada(partida_guardada: &PartidaGuardada) -> Self {
+        PartidaGuardada {
+            nom: partida_guardada.nom.clone(),
+            hash: partida_guardada.hash.clone(),
+            path: PathBuf::from(partida_guardada.path.to_str().unwrap()),
+            timestamp: partida_guardada.timestamp,
+        }
+    }
+
     pub fn update_metadata(&mut self) {
         if self.path.exists() {
             self.hash = Hasher::new().hash_file(&self.path, None::<PathBuf>);
@@ -47,6 +56,12 @@ impl PartidaGuardada {
     pub fn descarregar_partida_guardada<A: PartidesGuardadesAPI>(&self, api: &A) {
         let contingut = api.get_partida_guardada(&self);
         fs::write(self.path.as_path(), contingut).unwrap();
+    }
+
+    pub fn duplicar_fitxer(&self, nou_nom: String) {
+        let dir = self.path.parent().unwrap();
+        let nou_path = dir.join(nou_nom);
+        fs::copy(&self.path, &nou_path).unwrap();
     }
 }
 
@@ -75,7 +90,6 @@ mod tests {
     fn get_partida_w40k_servidor_sremota() -> PartidaGuardada {
         PartidaGuardada::new(get_partida_path_w40k_sremota())
     }
-
     #[test]
     fn test_new() {
         let test_file_path = get_partida_path_w40k_s1();
@@ -85,7 +99,16 @@ mod tests {
         assert_eq!(pg.hash, "02d47a22e09f46731a58dbe7cb299c0315c6760aec7557e8ca6e87090fc85dfd");
         assert_eq!(pg.path.to_str().unwrap(), test_file_path);
     }
+    #[test]
+    fn test_from_partida_guardada() {
+        let pg = get_partida_w40k_s1();
+        let copia = PartidaGuardada::from_partida_guardada(&pg);
+        assert_eq!(copia.nom, "save1.txt");
+        assert_eq!(copia.timestamp, 288718017);
+        assert_eq!(copia.hash, "02d47a22e09f46731a58dbe7cb299c0315c6760aec7557e8ca6e87090fc85dfd");
+        assert_eq!(copia.path.to_str().unwrap(), pg.path.to_str().unwrap());
 
+    }
     #[test]
     fn test_update_metadata() {
         let mut pg = get_partida_w40k_s1();
@@ -135,5 +158,15 @@ mod tests {
         assert_eq!(content_nou, "Contingut @ctualitzat!");
         // Restaurem el contingut original
         fs::write(partida_ja_existent.path.as_path(), content).unwrap();
+    }
+    #[test]
+    fn test_duplicar_fitxer() {
+        let partida_ja_existent = get_partida_ntw_s1();
+        let nou_nom = "pastanaga";
+        let nou_path = format!("{}/{}", partida_ja_existent.path.parent().unwrap().to_str().unwrap(), nou_nom);
+        assert!(!PathBuf::from(&nou_path).exists());
+        partida_ja_existent.duplicar_fitxer(nou_nom.to_string());
+        assert!(PathBuf::from(&nou_path).exists());
+        fs::remove_file(nou_path).unwrap();
     }
 }
