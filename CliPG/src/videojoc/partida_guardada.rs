@@ -67,7 +67,7 @@ impl PartidaGuardada {
 
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use crate::ser_pg_api::SerPGAPI;
     use crate::videojoc::tests::get_fake_server;
     use super::*;
@@ -81,13 +81,13 @@ mod tests {
     fn get_partida_path_w40k_sremota() -> String {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/path a videojocs/Total War 40k/save_remot.txt").to_str().unwrap().to_string()
     }
-    fn get_partida_ntw_s1() -> PartidaGuardada {
+    pub fn get_partida_ntw_s1() -> PartidaGuardada {
         PartidaGuardada::new(get_partida_path_ntw_s1())
     }
-    fn get_partida_w40k_s1() -> PartidaGuardada {
+    pub fn get_partida_w40k_s1() -> PartidaGuardada {
         PartidaGuardada::new(get_partida_path_w40k_s1())
     }
-    fn get_partida_w40k_servidor_sremota() -> PartidaGuardada {
+    pub fn get_partida_w40k_servidor_sremota() -> PartidaGuardada {
         PartidaGuardada::new(get_partida_path_w40k_sremota())
     }
     #[test]
@@ -157,7 +157,10 @@ mod tests {
         let content_nou = fs::read_to_string(partida_ja_existent.path.as_path()).unwrap();
         assert_eq!(content_nou, "Contingut @ctualitzat!");
         // Restaurem el contingut original
-        fs::write(partida_ja_existent.path.as_path(), content).unwrap();
+        fs::write(partida_ja_existent.path.as_path(), content.clone()).unwrap();
+        // Ens assegurem que s'hagi restaurat be
+        let content2 = fs::read_to_string(partida_ja_existent.path.as_path()).unwrap();
+        assert_eq!(content2, content);
     }
     #[test]
     fn test_duplicar_fitxer() {
