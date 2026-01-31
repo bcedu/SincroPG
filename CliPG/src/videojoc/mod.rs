@@ -56,7 +56,7 @@ impl Videojoc {
         }
     }
 
-    pub fn sync<A: PartidesGuardadesAPI>(&mut self, api: &A) -> String {
+    pub fn sync<A: PartidesGuardadesAPI>(&mut self, api: &A, test_mode: bool) -> String {
         // Assegurem dades actualitzades
         self.load_partides_locals();
         self.fetch_partides_remotes(api);
@@ -89,13 +89,17 @@ impl Videojoc {
                 (Some(local), None) => {
                     aux = format!("⬆️ Pujar partida local: {}", local.nom.to_str().unwrap().to_string());
                     println!("{}", aux);
-                    local.pujar_partida_guardada(api);
+                    if !test_mode {
+                        local.pujar_partida_guardada(api);
+                    }
                 }
                 // ⬇️ Només servidor
                 (None, Some(remote)) => {
                     aux = format!("⬇️ Descarregar partida remota: {}", remote.nom.to_str().unwrap().to_string());
                     println!("{}", aux);
-                    remote.descarregar_partida_guardada(api);
+                    if !test_mode {
+                        remote.descarregar_partida_guardada(api);
+                    }
                 }
                 // ✔️ Existeixen les dues
                 (Some(local), Some(remote)) => {
@@ -107,7 +111,9 @@ impl Videojoc {
                         // Diferents → conflicte
                         aux = format!("⚠️ Conflicte: {}", local.nom.to_str().unwrap().to_string());
                         println!("{}", aux);
-                        self.resoldre_conflicte(local, remote);
+                        if !test_mode {
+                            self.resoldre_conflicte(local, remote);
+                        }
                     }
                 }
                 // Cas impossible
@@ -130,7 +136,7 @@ impl Videojoc {
 mod tests {
     use super::*;
 
-    struct FakeAPI;
+    pub struct FakeAPI;
     impl PartidesGuardadesAPI for FakeAPI {
         fn get_partides_guardades(&self, _: String) -> Vec<PartidaGuardada> {
             let mut v = Vec::new();
@@ -158,6 +164,13 @@ mod tests {
             v
         }
         fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
+            if partida_guardada.nom == "save_remot.txt" {
+                "Pastanaga Bullida\nPartida remota\n@#áçñÑ%".to_string()
+            } else {
+                "Contingut @ctualitzat!".to_string()
+            }
+        }
     }
 
     fn get_videojoc_path_w40k() -> String {
@@ -168,7 +181,7 @@ mod tests {
         Videojoc::new(get_videojoc_path_w40k())
     }
 
-    fn get_fake_server() -> FakeAPI {
+    pub fn get_fake_server() -> FakeAPI {
         FakeAPI
     }
 
@@ -211,7 +224,7 @@ mod tests {
     #[test]
     fn test_sync() {
         let mut v = get_videojoc_w40k();
-        let resultat = v.sync(&get_fake_server());
+        let resultat = v.sync(&get_fake_server(), true);
         let resultat_esperat = "✔️ Partida OK: save1.txt
 ⬆️ Pujar partida local: save2.txt
 ⚠️ Conflicte: save3.txt

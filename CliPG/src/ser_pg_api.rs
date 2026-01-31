@@ -1,8 +1,10 @@
+use eframe::egui::TextBuffer;
 use crate::videojoc::partida_guardada::PartidaGuardada;
 
 pub trait PartidesGuardadesAPI {
-    fn get_partides_guardades(&self, nom: String) -> Vec<PartidaGuardada>;
+    fn get_partides_guardades(&self, nom_videojoc: String) -> Vec<PartidaGuardada>;
     fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada);
+    fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String;
 }
 
 pub struct SerPGAPI {
@@ -22,11 +24,13 @@ impl SerPGAPI {
 }
 
 impl PartidesGuardadesAPI for SerPGAPI{
-    fn get_partides_guardades(&self, videojoc: String) -> Vec<PartidaGuardada> {
-        // TODO
+    fn get_partides_guardades(&self, nom_videojoc: String) -> Vec<PartidaGuardada> {
         Vec::new()
     }
     fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {
 
+    }
+    fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
+        "".to_string()
     }
 }

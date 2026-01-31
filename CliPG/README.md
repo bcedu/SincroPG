@@ -43,11 +43,11 @@
 #### Mètodes
 
 | Fet | Mètode                                        | Retorn / Paràmetres | Descripció                                                  |
-|-----|-----------------------------------------------| ------------------- |-------------------------------------------------------------|
-| ✅   | `new(path: &str) -> Self`                     | `PartidaGuardada`   | Crea una instància llegint metadata (timestamp, hash).      |
-| ✅   | `update_metadata()`                           | `()`                | Torna a calcular timestamp i hash si el fitxer ha canviat.  |
-| ✅   | `pujar_partida_guardada(api: SerPGAPI)`       | `()`                | Puja la partida guardada al servidor.                       |
-| x   | `descarregar_partida_guardada(api: SerPGAPI)` | `()`                | Es descarrega la partida guardada del servidor i la guarda. |
+|----|-----------------------------------------------| ------------------- |-------------------------------------------------------------|
+| ✅  | `new(path: &str) -> Self`                     | `PartidaGuardada`   | Crea una instància llegint metadata (timestamp, hash).      |
+| ✅  | `update_metadata()`                           | `()`                | Torna a calcular timestamp i hash si el fitxer ha canviat.  |
+| ✅  | `pujar_partida_guardada(api: SerPGAPI)`       | `()`                | Puja la partida guardada al servidor.                       |
+| ✅   | `descarregar_partida_guardada(api: SerPGAPI)` | `()`                | Es descarrega la partida guardada del servidor i la guarda. |
 
 ---
 
@@ -87,11 +87,12 @@
 
 #### Mètodes
 
-| Fet | Mètode                                                                            | Retorn / Paràmetres    | Descripció                                                                        |
-|-----|-----------------------------------------------------------------------------------|------------------------|-----------------------------------------------------------------------------------|
-| x   | `new(usuari: String, contrassenya: String) -> Self`                               | `SerPGAPI`             | Constructor.                                                                      |
-| x   | `get_partides_guardades(videojoc: String) -> Vec<PartidaGuardada>`                | `Vec<PartidaGuardada>` | Obté les partides guardades del servidor per el videojoc que es digui `videojoc`. |
-| x   | `post_partida_guardada(partida_guardada: &PartidaGuardada)` | `()`                   | Puja la partida guardada al servidor.                                             |
+| Fet | Mètode                                                                 | Retorn / Paràmetres    | Descripció                                                                        |
+|-----|------------------------------------------------------------------------|------------------------|-----------------------------------------------------------------------------------|
+| x   | `new(usuari: String, contrassenya: String) -> Self`                    | `SerPGAPI`             | Constructor.                                                                      |
+| x   | `get_partides_guardades(nom_videojoc: String) -> Vec<PartidaGuardada>` | `Vec<PartidaGuardada>` | Obté les partides guardades del servidor per el videojoc que es digui `videojoc`. |
+| x   | `post_partida_guardada(partida_guardada: &PartidaGuardada)`            | `()`                   | Puja la partida guardada al servidor.                                             |
+| x   | `get_partida_guardada(partida_guardada: &PartidaGuardada) -> String`         | `String`               | Retorna el contingut del fitxer de la partida guardada que hi ha al servidor.     |
 
 
 ### Notes Generals
