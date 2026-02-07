@@ -190,7 +190,7 @@ pub mod tests {
         }
     }
     fn get_videojoc_path_w40k() -> String {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/path a videojocs/Total War 40k/").to_str().unwrap().to_string()
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_videojoc/path a videojocs/Total War 40k/").to_str().unwrap().to_string()
     }
     fn get_videojoc_w40k() -> Videojoc {
         Videojoc::new(get_videojoc_path_w40k())

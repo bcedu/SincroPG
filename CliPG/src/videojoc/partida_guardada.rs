@@ -70,6 +70,7 @@ impl PartidaGuardada {
         let mut f = fs::File::create(self.path.as_path()).unwrap();
         f.write_all(content.as_bytes()).unwrap();
         f.sync_all().unwrap();
+        drop(f);
     }
 
     pub fn read_file_sync(&self) -> String {
@@ -84,18 +85,17 @@ impl PartidaGuardada {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::ser_pg_api::SerPGAPI;
     use crate::videojoc::tests::get_fake_server;
     use super::*;
 
     fn get_partida_path_ntw_s1() -> String {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/path a videojocs/Napoleón TW HD/save1.txt").to_str().unwrap().to_string()
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_partida_guardada/path a videojocs/Napoleón TW HD/save1.txt").to_str().unwrap().to_string()
     }
     fn get_partida_path_w40k_s1() -> String {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/path a videojocs/Total War 40k/save1.txt").to_str().unwrap().to_string()
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_partida_guardada/path a videojocs/Total War 40k/save1.txt").to_str().unwrap().to_string()
     }
     fn get_partida_path_w40k_sremota() -> String {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/path a videojocs/Total War 40k/save_remot.txt").to_str().unwrap().to_string()
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_partida_guardada/path a videojocs/Total War 40k/save_remot.txt").to_str().unwrap().to_string()
     }
     pub fn get_partida_ntw_s1() -> PartidaGuardada {
         PartidaGuardada::new(get_partida_path_ntw_s1())
@@ -111,7 +111,7 @@ pub mod tests {
         let test_file_path = get_partida_path_w40k_s1();
         let pg = get_partida_w40k_s1();
         assert_eq!(pg.nom, "save1.txt");
-        assert_eq!(pg.timestamp, 288718017);
+        assert_eq!(pg.timestamp, 288718000);
         assert_eq!(pg.hash, "02d47a22e09f46731a58dbe7cb299c0315c6760aec7557e8ca6e87090fc85dfd");
         assert_eq!(pg.path.to_str().unwrap(), test_file_path);
     }
@@ -120,7 +120,7 @@ pub mod tests {
         let pg = get_partida_w40k_s1();
         let copia = PartidaGuardada::from_partida_guardada(&pg);
         assert_eq!(copia.nom, "save1.txt");
-        assert_eq!(copia.timestamp, 288718017);
+        assert_eq!(copia.timestamp, 288718000);
         assert_eq!(copia.hash, "02d47a22e09f46731a58dbe7cb299c0315c6760aec7557e8ca6e87090fc85dfd");
         assert_eq!(copia.path.to_str().unwrap(), pg.path.to_str().unwrap());
 
