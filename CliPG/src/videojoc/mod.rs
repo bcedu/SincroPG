@@ -151,7 +151,6 @@ impl Videojoc {
 
 #[cfg(test)]
 pub mod tests {
-    use std::fs::read_to_string;
     use super::*;
     use crate::videojoc::partida_guardada::tests::get_partida_ntw_s1;
     pub struct FakeAPI;
@@ -247,7 +246,7 @@ pub mod tests {
         let mut remot = get_partida_ntw_s1();
         let videojoc = get_videojoc_w40k();
         let api = get_fake_server();
-        let contingut_original = fs::read_to_string(local.path.as_path()).unwrap();
+        let contingut_original = local.read_file_sync();
         // Cas en que la local es la mes recent. No s'ha de crear cap fitxer local nou
         local.timestamp = 1;
         remot.timestamp = 0;
@@ -277,6 +276,6 @@ pub mod tests {
             }
         }
         assert_eq!(nfitxers_despres, 2);
-        fs::write(local.path.as_path(), contingut_original).unwrap();
+        local.write_file_sync(contingut_original.as_str());
     }
 }

@@ -1,6 +1,8 @@
 use std::ffi::OsString;
 use std::path::PathBuf;
 use std::fs;
+use std::fs::File;
+use std::io::{Write, Read};
 use normalized_hash::Hasher;
 use filetime::FileTime;
 use crate::ser_pg_api::PartidesGuardadesAPI;
@@ -55,13 +57,27 @@ impl PartidaGuardada {
 
     pub fn descarregar_partida_guardada<A: PartidesGuardadesAPI>(&self, api: &A) {
         let contingut = api.get_partida_guardada(&self);
-        fs::write(self.path.as_path(), contingut).unwrap();
+        self.write_file_sync(contingut.as_str());
     }
 
     pub fn duplicar_fitxer(&self, nou_nom: String) {
         let dir = self.path.parent().unwrap();
         let nou_path = dir.join(nou_nom);
         fs::copy(&self.path, &nou_path).unwrap();
+    }
+
+    pub fn write_file_sync(&self, content: &str) {
+        let mut f = fs::File::create(self.path.as_path()).unwrap();
+        f.write_all(content.as_bytes()).unwrap();
+        f.sync_all().unwrap();
+    }
+
+    pub fn read_file_sync(&self) -> String {
+        let mut contingut = String::new();
+        let mut f = File::open(self.path.clone().as_path()).unwrap();
+        f.read_to_string(&mut contingut).unwrap();
+        drop(f);
+        contingut
     }
 }
 
@@ -138,7 +154,7 @@ pub mod tests {
         // Ara ja hauria de existir
         assert!(partida_remota.path.exists());
         // Verifiquem el contingut
-        let content = fs::read_to_string(partida_remota.path.as_path()).unwrap();
+        let content = partida_remota.read_file_sync();
         assert_eq!(content, "Pastanaga Bullida\nPartida remota\n@#áçñÑ%");
         // Tornem a eliminar per deixarho com abans
         fs::remove_file(partida_remota.path).unwrap();
@@ -148,18 +164,18 @@ pub mod tests {
         // TEST 2: actualitza fitxer existent
         let partida_ja_existent = get_partida_ntw_s1();
         // Llegim el contingut original i verifiquem que es el que esperem
-        let content = fs::read_to_string(partida_ja_existent.path.as_path()).unwrap();
+        let content = partida_ja_existent.read_file_sync();
         assert_eq!(content, "Soc una partida guardada del Napoleon");
         // Descarreguem la nova verZio que hi ha al servidor
         let api = get_fake_server();
         partida_ja_existent.descarregar_partida_guardada(&api);
         assert!(partida_ja_existent.path.exists());
-        let content_nou = fs::read_to_string(partida_ja_existent.path.as_path()).unwrap();
+        let content_nou = partida_ja_existent.read_file_sync();
         assert_eq!(content_nou, "Contingut @ctualitzat!");
         // Restaurem el contingut original
-        fs::write(partida_ja_existent.path.as_path(), content.clone()).unwrap();
+        partida_ja_existent.write_file_sync(content.clone().as_str());
         // Ens assegurem que s'hagi restaurat be
-        let content2 = fs::read_to_string(partida_ja_existent.path.as_path()).unwrap();
+        let content2 = partida_ja_existent.read_file_sync();
         assert_eq!(content2, content);
     }
     #[test]
