@@ -21,8 +21,8 @@
 |-------|-------------------------------------------------------------------------|-----------------------------------------------------------------------| ---------------------------------------------------------------------------- |
 | ✅     | `new(nom: &str, local_folder: &str) -> Self`                            | `Videojoc`                                                            | Constructor amb nom i carpeta local.                                         |
 | ✅     | `load_partides_locals()`                                                | `()`                                                                  | Llegeix les partides de disc i les posa a `partides_locals`.                        |
-| ✅     | `fetch_partides_remotes(api: &SerPGAPI)`                                | `()`                                                                  | Demana al servidor les partides d’aquest joc i les posa a `partides_remotes`. |
-| ✅     | `sync(api: &SerPGAPI)`                                                  | `()`                                                                  | Sincronitza les partides locals amb les del servidor.                        |
+| ✅     | `fetch_partides_remotes(api: &PgAPI)`                                | `()`                                                                  | Demana al servidor les partides d’aquest joc i les posa a `partides_remotes`. |
+| ✅     | `sync(api: &PgAPI)`                                                  | `()`                                                                  | Sincronitza les partides locals amb les del servidor.                        |
 | ✅ | `resoldre_conflicte(local: &PartidaGuardada, server: &PartidaGuardada)` | `()`                | Gestiona conflictes (p. ex. renombrar i guardar les dues).                   |
 
 ---
@@ -47,8 +47,8 @@
 | ✅     | `new(path: &str) -> Self`                                           | `PartidaGuardada`   | Crea una instància llegint metadata (timestamp, hash).      |
 | ✅     | `from_partida_guardada(partida_guardada: &PartidaGuardada) -> Self` | `PartidaGuardada`   | Crea una instància copiant les dades.                       |
 | ✅     | `update_metadata()`                                                 | `()`                | Torna a calcular timestamp i hash si el fitxer ha canviat.  |
-| ✅     | `pujar_partida_guardada(api: SerPGAPI)`                             | `()`                | Puja la partida guardada al servidor.                       |
-| ✅     | `descarregar_partida_guardada(api: SerPGAPI)`                       | `()`                | Es descarrega la partida guardada del servidor i la guarda. |
+| ✅     | `pujar_partida_guardada(api: PgAPI)`                             | `()`                | Puja la partida guardada al servidor.                       |
+| ✅     | `descarregar_partida_guardada(api: PgAPI)`                       | `()`                | Es descarrega la partida guardada del servidor i la guarda. |
 | ✅ | `duplicar_fitxer(nou_nom: String)`                                  | `()`                | Duplica el fitxer de la partida local amb el nou nom.       |
 
 ---
@@ -61,21 +61,21 @@
 
 | Atribut | Tipus           | Descripció                               |
 | ------- | --------------- | ---------------------------------------- |
-| `api`   | `SerPGAPI`     | Client per comunicar-se amb el servidor. |
+| `api`   | `PgAPI`     | Client per comunicar-se amb el servidor. |
 | `vjocs` | `Vec<Videojoc>` | Llista de jocs locals configurats.       |
 
 #### Mètodes
 
 | Fet | Mètode                         | Retorn / Paràmetres | Descripció                                                                     |
 |-----|--------------------------------| ------------------- | ------------------------------------------------------------------------------ |
-| x   | `new(api: SerPGAPI) -> Self`   | `CliPG`               | Constructor amb l’API.                                                         |
+| x   | `new(api: PgAPI) -> Self`   | `CliPG`               | Constructor amb l’API.                                                         |
 | x   | `default() -> Self`            | `CliPG`               | Constructor per defecte (pots cridar `get_credentials()`).                     |
 | x   | `load_local_jocs()`            | `()`                | Carrega tots els jocs locals (crea instàncies `Videojoc` amb la seva carpeta). |
 | x   | `sync_all()`                   | `()`                | Sincronitza tots els jocs.                                                     |
 | x   | `sync_joc(joc: &mut Videojoc)` | `()`           | Sincronitza un joc concret amb el servidor.                                    |
 | x   | `show_status()`                | `()`                           | Mostra estat global de sincronització.                                         |
 
-### SerPGAPI (struct)
+### PgAPI (struct)
 
 **Responsabilitat:** Parlar amb la API del servidor per consultar, descarregar i pujar partides guardades.
 
@@ -91,7 +91,7 @@
 
 | Fet | Mètode                                                                 | Retorn / Paràmetres    | Descripció                                                                        |
 |---|------------------------------------------------------------------------|------------------------|-----------------------------------------------------------------------------------|
-| ✅ | `new(usuari: String, contrassenya: String) -> Self`                    | `SerPGAPI`             | Constructor.                                                                      |
+| ✅ | `new(usuari: String, contrassenya: String) -> Self`                    | `PgAPI`             | Constructor.                                                                      |
 | ✅ | `probar_connexio(&self) -> bool`                                       | `bool`                 | Proba de connectarse amb les credencials proporcionades.                          |
 | ✅ | `get_videojocs(&self) -> Vec<Videojoc>`                                | `Vec<String>`          | Obté el llistat de videojocs del servidor.                                        |
 | ✅  | `get_partides_guardades(nom_videojoc: String) -> Vec<PartidaGuardada>` | `Vec<PartidaGuardada>` | Obté les partides guardades del servidor per el videojoc que es digui `videojoc`. |
