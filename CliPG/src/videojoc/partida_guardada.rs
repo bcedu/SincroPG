@@ -44,6 +44,11 @@ impl PartidaGuardada {
         }
     }
 
+    pub fn with_hash(mut self, hash: String) -> Self {
+        self.hash = hash;
+        self
+    }
+
     pub fn update_metadata(&mut self) {
         if self.path.exists() {
             self.hash = Hasher::new().hash_file(&self.path, None::<PathBuf>);
