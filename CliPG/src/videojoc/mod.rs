@@ -9,7 +9,7 @@ use std::fs;
 use chrono::Local;
 
 pub struct Videojoc {
-    nom: OsString,
+    pub nom: OsString,
     local_folder: PathBuf,
     partides_locals: Vec<PartidaGuardada>,
     partides_remotes: Vec<PartidaGuardada>,
@@ -28,12 +28,10 @@ impl Videojoc {
             partides_remotes: Vec::new()
         }
     }
-
     pub fn with_nom(mut self, nom: String) -> Self {
         self.nom = OsString::from(nom);
         self
     }
-
     pub fn load_partides_locals(&mut self) {
         self.partides_locals.clear();
 
@@ -45,19 +43,17 @@ impl Videojoc {
             let path = entry.path();
             if path.is_file() {
                 self.partides_locals.push(
-                    PartidaGuardada::new(path.to_str().unwrap().to_string())
+                    PartidaGuardada::new(path.to_str().unwrap().to_string()).with_videojoc(self)
                 );
             }
         }
     }
-
     pub fn fetch_partides_remotes<A: PartidesGuardadesAPI>(&mut self, api: &A) {
         self.partides_remotes.clear();
         for partida_remota in api.get_partides_guardades(self.nom.to_str().unwrap().to_string()) {
             self.partides_remotes.push(partida_remota)
         }
     }
-
     pub fn sync<A: PartidesGuardadesAPI>(&mut self, api: &A, test_mode: bool) -> String {
         // Assegurem dades actualitzades
         self.load_partides_locals();
@@ -128,7 +124,6 @@ impl Videojoc {
         }
         resultat
     }
-
     pub fn resoldre_conflicte<A: PartidesGuardadesAPI>(&self, local: &PartidaGuardada, remot: &PartidaGuardada, api: &A) {
         // Donarem prioritat al que tingui el timestamp mes recent. El que tingui el timestamp
         // mes antic es renombara posant a davant del nom "bck_yyyymmddhhss_"
@@ -164,18 +159,21 @@ pub mod tests {
         fn get_partides_guardades(&self, _: String) -> Vec<PartidaGuardada> {
             let mut v = Vec::new();
             let p1 = PartidaGuardada {
+                videojoc: "".to_string(),
                 nom: OsString::from("save1.txt"),
                 path: PathBuf::new(),
                 timestamp: 245528886,
                 hash: "02d47a22e09f46731a58dbe7cb299c0315c6760aec7557e8ca6e87090fc85dfd".to_string(),
             };
             let p2 = PartidaGuardada {
+                videojoc: "".to_string(),
                 nom: OsString::from("save_test_2"),
                 path: PathBuf::new(),
                 timestamp: 0,
                 hash: "".to_string(),
             };
             let p3 = PartidaGuardada {
+                videojoc: "".to_string(),
                 nom: OsString::from("save3.txt"),
                 path: PathBuf::new(),
                 timestamp: 0,

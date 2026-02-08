@@ -9,6 +9,7 @@ use crate::ser_pg_api::PartidesGuardadesAPI;
 use crate::videojoc::Videojoc;
 
 pub struct PartidaGuardada {
+    pub videojoc: String,
     pub nom: OsString,
     pub path: PathBuf,
     pub timestamp: u32,
@@ -28,56 +29,54 @@ impl PartidaGuardada {
             timestamp = 0;
         }
         PartidaGuardada {
+            videojoc: "".to_string(),
             nom: full_path.file_name().unwrap_or_else(|| { panic!("La ruta {path} no és correcte!") }).to_os_string(),
             hash: hash,
             path: full_path,
             timestamp: timestamp,
         }
     }
-
     pub fn from_partida_guardada(partida_guardada: &PartidaGuardada) -> Self {
         PartidaGuardada {
+            videojoc: "".to_string(),
             nom: partida_guardada.nom.clone(),
             hash: partida_guardada.hash.clone(),
             path: PathBuf::from(partida_guardada.path.to_str().unwrap()),
             timestamp: partida_guardada.timestamp,
         }
     }
-
     pub fn with_hash(mut self, hash: String) -> Self {
         self.hash = hash;
         self
     }
-
+    pub fn with_videojoc(mut self, videojoc: &Videojoc) -> Self {
+        self.videojoc = videojoc.nom.to_str().unwrap().to_string();
+        self
+    }
     pub fn update_metadata(&mut self) {
         if self.path.exists() {
             self.hash = Hasher::new().hash_file(&self.path, None::<PathBuf>);
             self.timestamp = FileTime::from_last_modification_time(&fs::metadata(&self.path).unwrap()).nanoseconds();
         }
     }
-
     pub fn pujar_partida_guardada<A: PartidesGuardadesAPI>(&self, api: &A) {
         api.post_partida_guardada(&self);
     }
-
     pub fn descarregar_partida_guardada<A: PartidesGuardadesAPI>(&self, api: &A) {
         let contingut = api.get_partida_guardada(&self);
         self.write_file_sync(contingut.as_str());
     }
-
     pub fn duplicar_fitxer(&self, nou_nom: String) {
         let dir = self.path.parent().unwrap();
         let nou_path = dir.join(nou_nom);
         fs::copy(&self.path, &nou_path).unwrap();
     }
-
     pub fn write_file_sync(&self, content: &str) {
         let mut f = fs::File::create(self.path.as_path()).unwrap();
         f.write_all(content.as_bytes()).unwrap();
         f.sync_all().unwrap();
         drop(f);
     }
-
     pub fn read_file_sync(&self) -> String {
         let mut contingut = String::new();
         let mut f = File::open(self.path.clone().as_path()).unwrap();
@@ -92,7 +91,6 @@ impl PartidaGuardada {
 pub mod tests {
     use crate::videojoc::tests::get_fake_api;
     use super::*;
-
     fn get_partida_path_ntw_s1() -> String {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_partida_guardada/path a videojocs/Napoleón TW HD/save1.txt").to_str().unwrap().to_string()
     }
