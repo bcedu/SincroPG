@@ -2,7 +2,7 @@ pub mod partida_guardada;
 
 use std::collections::HashMap;
 use partida_guardada::*;
-use crate::ser_pg_api::{PartidesGuardadesAPI, SerPGAPI};
+use crate::pg_api::{PartidesGuardadesAPI, PgAPI};
 use std::path::PathBuf;
 use std::ffi::OsString;
 use std::fs;

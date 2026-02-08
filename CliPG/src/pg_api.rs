@@ -18,7 +18,7 @@ pub trait PartidesGuardadesAPI {
     // GET /api/v1/videojocs/{videojoc_id}/partides/{partida_id}/contingut
 }
 
-pub struct SerPGAPI {
+pub struct PgAPI {
     url: String,
     usuari: String,
     contrassenya: String,
@@ -43,9 +43,9 @@ struct PartidaGuardadaContingutAPI {
 #[derive(Debug)]
 enum RTYPE {GET, POST}
 
-impl SerPGAPI {
+impl PgAPI {
     pub fn new(url: String, usuari: String, contrassenya: String) -> Self {
-        SerPGAPI {
+        PgAPI {
             url,
             usuari,
             contrassenya,
@@ -92,7 +92,7 @@ impl SerPGAPI {
     }
 }
 
-impl PartidesGuardadesAPI for SerPGAPI{
+impl PartidesGuardadesAPI for PgAPI {
 
     fn probar_connexio(&self) -> bool {
         // GET /api/v1/test
@@ -144,11 +144,11 @@ pub mod tests {
     use eframe::egui::TextBuffer;
     use mockito::{Mock, Server};
     use urlencoding::encode;
-    use crate::ser_pg_api::{PartidesGuardadesAPI, SerPGAPI};
+    use crate::pg_api::{PartidesGuardadesAPI, PgAPI};
     use crate::videojoc::partida_guardada::PartidaGuardada;
 
-    fn get_pg_api(url: String) -> SerPGAPI {
-        SerPGAPI::new(url, String::from("admin"), String::from("pastanagabullida"))
+    fn get_pg_api(url: String) -> PgAPI {
+        PgAPI::new(url, String::from("admin"), String::from("pastanagabullida"))
     }
     fn get_fake_server(url: &str) -> (mockito::ServerGuard, Mock) {
         let mut server = Server::new();

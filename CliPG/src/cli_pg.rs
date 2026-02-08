@@ -1,9 +1,9 @@
-use crate::ser_pg_api::*;
+use crate::pg_api::*;
 use crate::videojoc::*;
 use eframe::egui;
 
 pub struct CliPG {
-    api: SerPGAPI,
+    api: PgAPI,
     vjocs: Vec<Videojoc>,
 }
 
@@ -22,7 +22,7 @@ impl CliPG {
         // Obtenim les credencials per el client
         let credencials: (String, String, String) = Self::get_credentials();
         CliPG {
-            api: SerPGAPI::new(credencials.0, credencials.1, credencials.2),
+            api: PgAPI::new(credencials.0, credencials.1, credencials.2),
             vjocs: Vec::new(),
         }
     }

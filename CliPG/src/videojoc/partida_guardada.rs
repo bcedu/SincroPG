@@ -5,7 +5,7 @@ use std::fs::File;
 use std::io::{Write, Read};
 use normalized_hash::Hasher;
 use filetime::FileTime;
-use crate::ser_pg_api::PartidesGuardadesAPI;
+use crate::pg_api::PartidesGuardadesAPI;
 use crate::videojoc::Videojoc;
 
 pub struct PartidaGuardada {
