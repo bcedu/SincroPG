@@ -85,7 +85,7 @@ impl PartidaGuardada {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::videojoc::tests::get_fake_server;
+    use crate::videojoc::tests::get_fake_api;
     use super::*;
 
     fn get_partida_path_ntw_s1() -> String {
@@ -149,7 +149,7 @@ pub mod tests {
         let partida_remota = get_partida_w40k_servidor_sremota();
         assert!(!partida_remota.path.exists());
         // Descarraguem la partida
-        let api = get_fake_server();
+        let api = get_fake_api();
         partida_remota.descarregar_partida_guardada(&api);
         // Ara ja hauria de existir
         assert!(partida_remota.path.exists());
@@ -167,7 +167,7 @@ pub mod tests {
         let content = partida_ja_existent.read_file_sync();
         assert_eq!(content, "Soc una partida guardada del Napoleon");
         // Descarreguem la nova verZio que hi ha al servidor
-        let api = get_fake_server();
+        let api = get_fake_api();
         partida_ja_existent.descarregar_partida_guardada(&api);
         assert!(partida_ja_existent.path.exists());
         let content_nou = partida_ja_existent.read_file_sync();

@@ -155,6 +155,12 @@ pub mod tests {
     use crate::videojoc::partida_guardada::tests::get_partida_ntw_s1;
     pub struct FakeAPI;
     impl PartidesGuardadesAPI for FakeAPI {
+        fn probar_connexio(&self) -> bool{
+            true
+        }
+        fn get_videojocs(&self) ->Vec<String> {
+            Vec::new()
+        }
         fn get_partides_guardades(&self, _: String) -> Vec<PartidaGuardada> {
             let mut v = Vec::new();
             let p1 = PartidaGuardada {
@@ -195,7 +201,7 @@ pub mod tests {
     fn get_videojoc_w40k() -> Videojoc {
         Videojoc::new(get_videojoc_path_w40k())
     }
-    pub fn get_fake_server() -> FakeAPI {
+    pub fn get_fake_api() -> FakeAPI {
         FakeAPI
     }
     #[test]
@@ -223,7 +229,7 @@ pub mod tests {
     #[test]
     fn test_fetch_partides_remotes() {
         let mut v = get_videojoc_w40k();
-        let s = get_fake_server();
+        let s = get_fake_api();
         v.fetch_partides_remotes(&s);
         assert_eq!(v.partides_remotes.len(), 3);
         assert_eq!(v.partides_remotes[0].nom, "save1.txt");
@@ -233,7 +239,7 @@ pub mod tests {
     #[test]
     fn test_sync() {
         let mut v = get_videojoc_w40k();
-        let resultat = v.sync(&get_fake_server(), true);
+        let resultat = v.sync(&get_fake_api(), true);
         let resultat_esperat = "✔️ Partida OK: save1.txt
 ⬆️ Pujar partida local: save2.txt
 ⚠️ Conflicte: save3.txt
@@ -245,7 +251,7 @@ pub mod tests {
         let mut local = get_partida_ntw_s1();
         let mut remot = get_partida_ntw_s1();
         let videojoc = get_videojoc_w40k();
-        let api = get_fake_server();
+        let api = get_fake_api();
         let contingut_original = local.read_file_sync();
         // Cas en que la local es la mes recent. No s'ha de crear cap fitxer local nou
         local.timestamp = 1;
