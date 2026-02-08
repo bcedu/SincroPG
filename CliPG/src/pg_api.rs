@@ -102,20 +102,21 @@ impl PartidesGuardadesAPI for PgAPI {
         // GET /api/v1/videojocs
         let mut videojocs = Vec::new();
         let response = self.make_get_request("videojocs");
-        let videjocs_server:  Vec<VideojocAPI>  = response.json().unwrap();
-        for v in videjocs_server {
+        let videojocs_server:  Vec<VideojocAPI>  = response.json().unwrap();
+        for v in videojocs_server {
             videojocs.push(v.nom);
         }
         videojocs
     }
     fn get_partides_guardades(&self, nom_videojoc: String) -> Vec<PartidaGuardada> {
         // GET /api/v1/videojocs/{videojoc_id}/partides
+        let v = Videojoc::new(nom_videojoc.clone());
         let mut partides = Vec::new();
         let request_url = format!("videojocs/{nom_videojoc}/partides");
         let response = self.make_get_request(request_url.as_str());
         let partides_server:  Vec<PartidaGuardadaAPI>  = response.json().unwrap();
         for p in partides_server {
-            let pg = PartidaGuardada::new(p.nom).with_hash(p.hash);
+            let pg = PartidaGuardada::new(p.nom).with_hash(p.hash).with_videojoc(&v);
             partides.push(pg);
         }
         partides
@@ -123,7 +124,7 @@ impl PartidesGuardadesAPI for PgAPI {
     fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {
         // POST /api/v1/videojocs/{videojoc_id}/partides
         if partida_guardada.videojoc.is_empty() {
-            panic!("No es pot pujar la partida {} si no te el videjoc definit.", partida_guardada.nom.to_str().unwrap());
+            panic!("No es pot pujar la partida {} si no te el videojoc definit.", partida_guardada.nom.to_str().unwrap());
         }
         let request_url = format!("videojocs/{}/partides", partida_guardada.videojoc);
         let content = partida_guardada.read_file_sync();
@@ -134,7 +135,13 @@ impl PartidesGuardadesAPI for PgAPI {
         self.make_post_request(request_url.as_str(), pa);
     }
     fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
-        "".to_string()
+        // GET /api/v1/videojocs/{videojoc_id}/partides/{partida_id}/contingut
+        if partida_guardada.videojoc.is_empty() {
+            panic!("No es pot descarregar la partida {} si no te el videojoc definit.", partida_guardada.nom.to_str().unwrap());
+        }
+        let request_url = format!("videojocs/{}/partides/{}/contingut", partida_guardada.videojoc, partida_guardada.nom.to_str().unwrap());
+        let pg: PartidaGuardadaContingutAPI = self.make_get_request(request_url.as_str()).json().unwrap();
+        pg.contingut
     }
 }
 
@@ -195,6 +202,14 @@ pub mod tests {
             .create();
         (server, _mock)
     }
+    fn setup_fake_server_get_partida_guardada(nom_videojoc: String, nom_partida: String) -> mockito::ServerGuard {
+        let (server, _mock) = get_fake_server(format!("videojocs/{nom_videojoc}/partides/{nom_partida}/contingut").as_str());
+        _mock
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"nom":"save1.txt","contingut":"Pastanaga Bullida À@"}"#)
+            .create();
+        server
+    }
     fn get_partida_path_ntw_s1() -> String {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_pg_api/path a videojocs/Napoleón TW HD/save1.txt").to_str().unwrap().to_string()
     }
@@ -229,10 +244,13 @@ pub mod tests {
         assert_eq!(videojocs.len(), 3);
         assert_eq!(videojocs.get(0).unwrap().nom.to_str().unwrap().to_string(), "save1.txt".to_string());
         assert_eq!(videojocs.get(0).unwrap().hash.to_string(), "patata".to_string());
+        assert_eq!(videojocs.get(0).unwrap().videojoc.to_string(), nom_videojoc.to_string());
         assert_eq!(videojocs.get(1).unwrap().nom.to_str().unwrap().to_string(), "save".to_string());
         assert_eq!(videojocs.get(1).unwrap().hash.to_string(), "pastanaga".to_string());
+        assert_eq!(videojocs.get(1).unwrap().videojoc.to_string(), nom_videojoc.to_string());
         assert_eq!(videojocs.get(2).unwrap().nom.to_str().unwrap().to_string(), "1234@.xml,1".to_string());
         assert_eq!(videojocs.get(2).unwrap().hash.to_string(), "@@".to_string());
+        assert_eq!(videojocs.get(2).unwrap().videojoc.to_string(), nom_videojoc.to_string());
     }
     #[test]
     fn test_post_partida_guardada() {
@@ -242,5 +260,14 @@ pub mod tests {
         let partida = get_partida_ntw_s1();
         pgapi.post_partida_guardada(&partida);
         _mock.assert();
+    }
+    #[test]
+    fn test_get_partida_guardada() {
+        let nom_videojoc = "Napoleón TW HD";
+        let partida = get_partida_ntw_s1();
+        let server = setup_fake_server_get_partida_guardada(nom_videojoc.to_string(), partida.nom.to_str().unwrap().to_string());
+        let pgapi = get_pg_api(server.url().clone());
+        let content = pgapi.get_partida_guardada(&partida);
+        assert_eq!(content,  "Pastanaga Bullida À@");
     }
 }

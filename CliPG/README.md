@@ -34,7 +34,8 @@
 #### Atributs
 
 | Atribut     | Tipus    | Descripció                                      |
-| ----------- |----------| ----------------------------------------------- |
+|-------------|----------|-------------------------------------------------|
+| `videojoc`  | `String` | Nom del videojoc.                               |
 | `nom`       | `String` | Nom de la partida.                              |
 | `path`      | `String` | Ruta completa del fitxer local.                 |
 | `timestamp` | `u32`    | Última modificació (per comparar amb servidor). |
@@ -90,13 +91,13 @@
 #### Mètodes
 
 | Fet | Mètode                                                                 | Retorn / Paràmetres    | Descripció                                                                        |
-|---|------------------------------------------------------------------------|------------------------|-----------------------------------------------------------------------------------|
+|--|------------------------------------------------------------------------|------------------------|-----------------------------------------------------------------------------------|
 | ✅ | `new(usuari: String, contrassenya: String) -> Self`                    | `PgAPI`             | Constructor.                                                                      |
 | ✅ | `probar_connexio(&self) -> bool`                                       | `bool`                 | Proba de connectarse amb les credencials proporcionades.                          |
 | ✅ | `get_videojocs(&self) -> Vec<Videojoc>`                                | `Vec<String>`          | Obté el llistat de videojocs del servidor.                                        |
-| ✅  | `get_partides_guardades(nom_videojoc: String) -> Vec<PartidaGuardada>` | `Vec<PartidaGuardada>` | Obté les partides guardades del servidor per el videojoc que es digui `videojoc`. |
-| ✅  | `post_partida_guardada(partida_guardada: &PartidaGuardada)`            | `()`                   | Puja la partida guardada al servidor.                                             |
-| x | `get_partida_guardada(partida_guardada: &PartidaGuardada) -> String`   | `String`               | Retorna el contingut del fitxer de la partida guardada que hi ha al servidor.     |
+| ✅ | `get_partides_guardades(nom_videojoc: String) -> Vec<PartidaGuardada>` | `Vec<PartidaGuardada>` | Obté les partides guardades del servidor per el videojoc que es digui `videojoc`. |
+| ✅ | `post_partida_guardada(partida_guardada: &PartidaGuardada)`            | `()`                   | Puja la partida guardada al servidor.                                             |
+| ✅ | `get_partida_guardada(partida_guardada: &PartidaGuardada) -> String`   | `String`               | Retorna el contingut del fitxer de la partida guardada que hi ha al servidor.     |
 
 #### Structs que representen respostes de la API:
 
