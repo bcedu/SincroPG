@@ -153,7 +153,6 @@ pub mod tests {
     use urlencoding::encode;
     use crate::pg_api::{PartidesGuardadesAPI, PgAPI};
     use crate::videojoc::partida_guardada::PartidaGuardada;
-
     fn get_pg_api(url: String) -> PgAPI {
         PgAPI::new(url, String::from("admin"), String::from("pastanagabullida"))
     }

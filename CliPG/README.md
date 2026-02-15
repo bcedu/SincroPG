@@ -54,28 +54,6 @@
 
 ---
 
-### CliPG (struct)
-
-**Responsabilitat:** Gestiona la llista de jocs i la sincronització global.
-
-#### Atributs
-
-| Atribut | Tipus           | Descripció                               |
-| ------- | --------------- | ---------------------------------------- |
-| `api`   | `PgAPI`     | Client per comunicar-se amb el servidor. |
-| `vjocs` | `Vec<Videojoc>` | Llista de jocs locals configurats.       |
-
-#### Mètodes
-
-| Fet | Mètode                         | Retorn / Paràmetres | Descripció                                                                     |
-|-----|--------------------------------| ------------------- | ------------------------------------------------------------------------------ |
-| x   | `new(api: PgAPI) -> Self`   | `CliPG`               | Constructor amb l’API.                                                         |
-| x   | `default() -> Self`            | `CliPG`               | Constructor per defecte (pots cridar `get_credentials()`).                     |
-| x   | `load_local_jocs()`            | `()`                | Carrega tots els jocs locals (crea instàncies `Videojoc` amb la seva carpeta). |
-| x   | `sync_all()`                   | `()`                | Sincronitza tots els jocs.                                                     |
-| x   | `sync_joc(joc: &mut Videojoc)` | `()`           | Sincronitza un joc concret amb el servidor.                                    |
-| x   | `show_status()`                | `()`                           | Mostra estat global de sincronització.                                         |
-
 ### PgAPI (struct)
 
 **Responsabilitat:** Parlar amb la API del servidor per consultar, descarregar i pujar partides guardades.
@@ -113,12 +91,49 @@
 - `nom`: String
 - `contingut`: String
 
+---
 
-### Notes Generals
-1. Cada `Videojoc` coneix la seva carpeta local → no cal atribut global `local_folder`.
-2. Cada `Videojoc` té la llista de partides locals i del servidor → sincronització encapsulada.
-3. `CliPG` només gestiona la llista de jocs i la crida a sincronització global.
-4. Permet escalar fàcilment a més jocs i més metadades sense tocar el client.
+### CliPG (struct)
+
+**Responsabilitat:** Gestiona la llista de jocs i la sincronització global.
+
+#### Atributs
+
+| Atribut  | Tipus           | Descripció                               |
+|----------| --------------- |------------------------------------------|
+| `api`    | `PgAPI`     | Client per comunicar-se amb el servidor. |
+| `vjocs`  | `Vec<Videojoc>` | Llista de jocs locals configurats.       |
+| `config` | `CliPgConfig` | Dades gaurdades de la aplicacio.         |
+
+
+#### Mètodes
+
+| Fet | Mètode                                   | Retorn / Paràmetres | Descripció                                                                     |
+|--|------------------------------------------| ------------------- |--------------------------------------------------------------------------------|
+| x | `new(api: PgAPI) -> Self`                | `CliPG`               | Constructor amb l’API.                                                         |
+| x | `default() -> Self`                      | `CliPG`               | Constructor per defecte (pots cridar `get_credentials()`).                     |
+| x | `load_local_jocs()`                      | `()`                | Carrega tots els jocs locals (crea instàncies `Videojoc` amb la seva carpeta). |
+| x | `sync_all()`                             | `()`                | Sincronitza tots els jocs.                                                     |
+| x | `sync_joc(joc: &mut Videojoc)`           | `()`           | Sincronitza un joc concret amb el servidor.                                    |
+| x | `show_status()`                          | `()`                           | Mostra estat global de sincronització.                                         |
+| ✅ | `get_config_path() -> PathBuf`           | `()`                | Retorna el path al fitxer de configuracio.                                     |
+| ✅ | `save_config(config: CliPgConfig)`       | `()`                | Guarda al disc la configuracio proporcionada.                                  |
+| ✅ | `load_or_create_config() -> CliPgConfig` | `()`                | Carrega al configuracio que hi hagi guardada actualemtnen disc                 |
+
+#### Structs que representen les dades guardades de la aplicació:
+
+`CliPgConfig`:
+- `server`: ServerConfig
+- `videojocs_habilitats`: Vec<VideojocConfig>
+
+`ServerConfig`:
+- `url`: String
+- `usuari`: String
+- `contrasenya`: String
+
+`VideojocConfig`:
+- `nom`: String
+- `path`: String
 
 
 ---
@@ -126,6 +141,15 @@
 ## 2. Flux de la interfície (UI)
 
 Per la UI es farà servir `egui`.
+
+
+#### Notes Generals
+
+1. Cada `Videojoc` coneix la seva carpeta local → no cal atribut global `local_folder`.
+2. Cada `Videojoc` té la llista de partides locals i del servidor → sincronització encapsulada.
+3. `CliPG` només gestiona la llista de jocs i la crida a sincronització global.
+4. Permet escalar fàcilment a més jocs i més metadades sense tocar el client.
+
 
 ### 2.1 Inici de l’aplicació
 
