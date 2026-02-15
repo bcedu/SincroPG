@@ -1,0 +1,12 @@
+[server]
+url = "patata"
+usuari = "demo"
+contrasenya = "demo"
+
+[[videojocs_habilitats.list]]
+nom = "Napoleon TW"
+path = "/home/patata/Napoleon TW"
+
+[[videojocs_habilitats.list]]
+nom = "Space Marine 3"
+path = "/home/patata/Space Marine 3"
