@@ -97,6 +97,22 @@ impl CliPG {
         let toml = toml::to_string_pretty(&config).unwrap();
         fs::write(cpath, toml).unwrap();
     }
+    fn load_local_jocs(&mut self) -> Vec<VideojocConfig> {
+        self.vjocs = Vec::new();
+        let mut error_jocs = Vec::new();
+        for v in self.config.videojocs_habilitats.list.iter() {
+            let path = PathBuf::from(&v.path);
+            if path.exists() {
+                self.vjocs.push(Videojoc::new(v.path.clone()).with_nom(v.nom.clone()))
+            } else {
+                error_jocs.push(VideojocConfig {
+                    nom: v.nom.clone(),
+                    path: v.path.clone(),
+                })
+            }
+        }
+        error_jocs
+    }
 }
 
 impl eframe::App for CliPG {
@@ -127,6 +143,30 @@ pub mod tests {
         config.videojocs_habilitats.list.push(VideojocConfig {
             nom: "Space Marine 3".to_string(),
             path: "/home/patata/Space Marine 3".to_string()
+        });
+        CliPG {
+            api: PgAPI::new(url.clone(), usuari.clone(), contrassenya.clone()),
+            vjocs: Vec::new(),
+            config: config,
+        }
+    }
+    fn get_correct_dummy_cli_pg() -> CliPG {
+        let url = "http://localhost:8000".to_string();
+        let usuari = "admin".to_string();
+        let contrassenya = "pass".to_string();
+        let mut config = CliPgConfig::default();
+        let test_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/path a videojocs");
+        config.videojocs_habilitats.list.push(VideojocConfig {
+            nom: "Mount & blade Warband 2".to_string(),
+            path: format!("{}/Mount & blade Warband 2", test_path.to_str().unwrap().clone())
+        });
+        config.videojocs_habilitats.list.push(VideojocConfig {
+            nom: "Napoleón TW HD".to_string(),
+            path: format!("{}/Napoleón TW HD", test_path.to_str().unwrap().clone())
+        });
+        config.videojocs_habilitats.list.push(VideojocConfig {
+            nom: "Total War 40k".to_string(),
+            path: format!("{}/Total War 40k", test_path.to_str().unwrap().clone())
         });
         CliPG {
             api: PgAPI::new(url.clone(), usuari.clone(), contrassenya.clone()),
@@ -171,5 +211,21 @@ pub mod tests {
         assert_eq!(c.server.contrasenya, "demo".to_string());
         assert_eq!(c.videojocs_habilitats.list[0].nom, "Napoleon TW".to_string());
         assert_eq!(c.videojocs_habilitats.list[1].path, "/home/patata/Space Marine 3".to_string());
+    }
+    #[test]
+    fn test_load_local_jocs() {
+        let mut cli = get_dummy_cli_pg();
+        let res = cli.load_local_jocs();
+        assert_eq!(res.len(), 2);
+        assert_eq!(res.get(0).unwrap().nom, "Napoleon TW");
+        assert_eq!(res.get(1).unwrap().nom, "Space Marine 3");
+        assert_eq!(cli.vjocs.len(), 0);
+        let mut cli = get_correct_dummy_cli_pg();
+        let res = cli.load_local_jocs();
+        assert_eq!(res.len(), 0);
+        assert_eq!(cli.vjocs.len(), 3);
+        assert_eq!(cli.vjocs[0].nom, "Mount & blade Warband 2");
+        assert_eq!(cli.vjocs[1].nom, "Napoleón TW HD");
+        assert_eq!(cli.vjocs[2].nom, "Total War 40k");
     }
 }
