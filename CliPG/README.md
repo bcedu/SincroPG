@@ -109,16 +109,16 @@
 
 #### Mètodes
 
-| Fet | Mètode                                   | Retorn / Paràmetres | Descripció                                                                                                                                 |
-|----|------------------------------------------| ----------------- |--------------------------------------------------------------------------------------------------------------------------------------------|
-| ✅  | `default() -> Self`                      | `CliPG`             | Constructor per defecte (pots cridar `get_credentials()`).                                                                                 |
-| ✅  | `load_local_jocs()`                      | `Vec<VideojocConfig>`                | Carrega tots els jocs locals (crea instàncies `Videojoc` amb la seva carpeta). Retorna una llista amb els jocs que no s'han pogut carregar |
-| ✅ | `sync_all()`                             | `()`              | Sincronitza tots els jocs.                                                                                                                 |
-| ✅   | `sync_joc(joc: &mut Videojoc)`           | `()`           | Sincronitza un joc concret amb el servidor.                                                                                                |
-| x  | `show_status()`                          | `()`                         | Mostra estat global de sincronització.                                                                                                     |
-| ✅  | `get_config_path() -> PathBuf`           | `()`              | Retorna el path al fitxer de configuracio.                                                                                                 |
-| ✅  | `save_config(config: CliPgConfig)`       | `()`              | Guarda al disc la configuracio proporcionada.                                                                                              |
-| ✅  | `load_or_create_config() -> CliPgConfig` | `()`              | Carrega al configuracio que hi hagi guardada actualemtnen disc                                                                             |
+| Fet | Mètode                                   | Retorn / Paràmetres   | Descripció                                                                                                                                 |
+|----|------------------------------------------|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| ✅  | `default() -> Self`                      | `CliPG`               | Constructor per defecte (pots cridar `get_credentials()`).                                                                                 |
+| ✅  | `load_local_jocs()`                      | `Vec<VideojocConfig>` | Carrega tots els jocs locals (crea instàncies `Videojoc` amb la seva carpeta). Retorna una llista amb els jocs que no s'han pogut carregar |
+| ✅ | `sync_all()`                             | `()`                  | Sincronitza tots els jocs.                                                                                                                 |
+| ✅   | `sync_joc(joc: &mut Videojoc)`           | `String`              | Sincronitza un joc concret amb el servidor.                                                                                                |
+| x  | `show_status()`                          | `()`                  | Mostra estat global de sincronització.                                                                                                     |
+| ✅  | `get_config_path() -> PathBuf`           | `()`                  | Retorna el path al fitxer de configuracio.                                                                                                 |
+| ✅  | `save_config(config: CliPgConfig)`       | `()`                  | Guarda al disc la configuracio proporcionada.                                                                                              |
+| ✅  | `load_or_create_config() -> CliPgConfig` | `()`                  | Carrega al configuracio que hi hagi guardada actualemtnen disc                                                                             |
 
 #### Structs que representen les dades guardades de la aplicació:
 

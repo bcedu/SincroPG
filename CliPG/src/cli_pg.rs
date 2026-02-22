@@ -113,14 +113,18 @@ impl CliPG {
         }
         error_jocs
     }
-    fn sync_joc(&self, joc: &Videojoc) {
+    fn sync_joc(&self, joc: &Videojoc) -> String {
         let mut joc_m = Videojoc::from(joc);
-        joc_m.sync(&self.api, false);
+        let joc_res = joc_m.sync(&self.api, false);
+        format!("* {}:\n{joc_res}", joc.nom.clone().to_str().unwrap())
     }
-    fn sync_all(&mut self) {
+    fn sync_all(&mut self) -> String {
+        let res = "";
         for v in self.vjocs.iter() {
-            self.sync_joc(v);
+            let joc_res = self.sync_joc(v);
+            let res = format!("{}\n{}", res, joc_res);
         }
+        res.to_string()
     }
 }
 
