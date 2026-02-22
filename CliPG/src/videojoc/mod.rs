@@ -28,6 +28,9 @@ impl Videojoc {
             partides_remotes: Vec::new()
         }
     }
+    pub fn from(videojoc: &Videojoc) -> Self {
+        Videojoc::new(videojoc.local_folder.to_str().unwrap().to_string())
+    }
     pub fn with_nom(mut self, nom: String) -> Self {
         self.nom = OsString::from(nom);
         self
@@ -213,6 +216,13 @@ pub mod tests {
         let v = get_videojoc_w40k().with_nom("Pastanaga bullida".to_string());
         assert_eq!(v.nom, "Pastanaga bullida");
         assert_eq!(v.local_folder.to_str().unwrap(), get_videojoc_path_w40k());
+    }
+    #[test]
+    fn test_from() {
+        let v = get_videojoc_w40k();
+        let v2 = Videojoc::from(&v);
+        assert_eq!(v2.nom, "Total War 40k");
+        assert_eq!(v2.local_folder.to_str().unwrap(), get_videojoc_path_w40k());
     }
     #[test]
     fn test_load_partides_locals() {

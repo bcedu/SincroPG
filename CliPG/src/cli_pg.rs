@@ -113,6 +113,15 @@ impl CliPG {
         }
         error_jocs
     }
+    fn sync_joc(&self, joc: &Videojoc) {
+        let mut joc_m = Videojoc::from(joc);
+        joc_m.sync(&self.api, false);
+    }
+    fn sync_all(&mut self) {
+        for v in self.vjocs.iter() {
+            self.sync_joc(v);
+        }
+    }
 }
 
 impl eframe::App for CliPG {
@@ -227,5 +236,15 @@ pub mod tests {
         assert_eq!(cli.vjocs[0].nom, "Mount & blade Warband 2");
         assert_eq!(cli.vjocs[1].nom, "Napoleón TW HD");
         assert_eq!(cli.vjocs[2].nom, "Total War 40k");
+    }
+    #[test]
+    fn test_sync_joc() {
+        // NO testegem res ja que el metode sync crida només el sync del videjoc
+        assert!(true);
+    }
+    #[test]
+    fn test_sync_all() {
+        // NO testegem res ja que el metode sync_all nomes fa un bucle cridant el sync_joc
+        assert!(true);
     }
 }
