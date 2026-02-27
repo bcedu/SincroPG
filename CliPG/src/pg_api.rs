@@ -1,3 +1,4 @@
+use std::fmt::format;
 use eframe::egui::TextBuffer;
 use reqwest::Response;
 use crate::videojoc::partida_guardada::PartidaGuardada;
@@ -59,8 +60,10 @@ impl PgAPI {
         self.make_request(RTYPE::POST, endpoint, Some(body))
     }
     fn make_request(&self, rtype: RTYPE, endpoint: &str, body: Option<PartidaGuardadaContingutAPI>) -> reqwest::blocking::Response {
-        let encoded = encode(&endpoint);
-        let request_url = format!("{url}/api/v1/{encoded}", url = self.url.clone());
+        let mut request_url = format!("{url}/api/v1", url = self.url.clone());
+        for endpoint_part in endpoint.split('/') {
+            request_url = format!("{}/{}", request_url, encode(endpoint_part));
+        }
         println!("REQUEST {:?} {request_url}", rtype);
         let response;
         match rtype {
@@ -158,9 +161,12 @@ pub mod tests {
     }
     fn get_fake_server(url: &str) -> (mockito::ServerGuard, Mock) {
         let mut server = Server::new();
-        let encoded = encode(&url);
+        let mut encoded = format!("/api/v1");
+        for endpoint_part in url.split('/') {
+            encoded = format!("{}/{}", encoded, encode(endpoint_part));
+        }
         let _mock = server
-            .mock("GET", format!("/api/v1/{encoded}").as_str())
+            .mock("GET", encoded.as_str())
             .match_header("authorization", "Basic YWRtaW46cGFzdGFuYWdhYnVsbGlkYQ==")
             .with_status(200).expect(1);
         (server, _mock)
@@ -191,9 +197,12 @@ pub mod tests {
     fn setup_fake_server_post_partida_guardada(nom_videojoc: String) -> (mockito::ServerGuard, Mock) {
         let url = format!("videojocs/{nom_videojoc}/partides");
         let mut server = Server::new();
-        let encoded = encode(&url);
+        let mut encoded = format!("/api/v1");
+        for endpoint_part in url.split('/') {
+            encoded = format!("{}/{}", encoded, encode(endpoint_part));
+        }
         let _mock = server
-            .mock("POST", format!("/api/v1/{encoded}").as_str())
+            .mock("POST", encoded.as_str())
             .match_header("authorization", "Basic YWRtaW46cGFzdGFuYWdhYnVsbGlkYQ==")
             .match_body(r#"{"nom":"save1.txt","contingut":"Soc una partida guardada del Napoleón"}"#)
             .with_status(201)
