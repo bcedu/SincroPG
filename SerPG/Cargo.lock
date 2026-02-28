@@ -7,6 +7,7 @@ name = "SerPG"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "axum-auth",
  "normalized-hash",
  "reqwest",
  "serde",
@@ -74,6 +75,17 @@ dependencies = [
  "tower-layer",
  "tower-service",
  "tracing",
+]
+
+[[package]]
+name = "axum-auth"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "93495037c01c639b198ecb926b58f7f1c0d61ae663edcd61b2dd679f2a0bffe6"
+dependencies = [
+ "axum-core",
+ "base64",
+ "http",
 ]
 
 [[package]]

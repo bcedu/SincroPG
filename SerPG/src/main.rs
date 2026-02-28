@@ -1,19 +1,24 @@
 use axum::{
-    extract::{Path, Json},
+    extract::{Path, Json, State},
     routing::{get, post},
     Router,
+    http::StatusCode,
 };
+use axum_auth::AuthBasic;
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;
-use std::fs;
-use std::fs::File;
-use std::io::{Write, Read};
-use std::path::PathBuf;
-use axum::extract::State;
+use std::{
+    fs,
+    fs::File,
+    io::{Write, Read},
+    path::PathBuf,
+};
 use normalized_hash::Hasher;
 #[derive(Clone)]
 struct SerPGState {
     videojocs_path: String,
+    user: String,
+    password: String,
 }
 #[derive(Debug, Serialize, Deserialize)]
 struct VideojocAPI {
@@ -34,9 +39,10 @@ struct SerPG {
     pub router: Router,
 }
 impl SerPG {
-    fn new(path: String) -> Self {
+    fn new(path: String, user: String, password: String) -> Self {
         let state = SerPGState {
             videojocs_path: path,
+            user, password
         };
         let r = Router::new()
             .route("/api/v1/test", get(Self::test))
@@ -54,10 +60,18 @@ impl SerPG {
         let listener = TcpListener::bind(addr).await.unwrap();
         axum::serve(listener, self.router).await.unwrap();
     }
-    async fn test() -> &'static str {
-        "OK"
+    fn check_auth(user: String, pass: Option<String>, spg_state: &SerPGState) -> Result<(), StatusCode> {
+        if user == spg_state.user && pass.as_deref() == Some(spg_state.password.as_str()) {
+            Ok(())
+        } else {
+            Err(StatusCode::UNAUTHORIZED)
+        }
     }
-    async fn get_videojocs(State(spg_state): State<SerPGState>) -> Json<Vec<VideojocAPI>> {
+    async fn test(AuthBasic((user, pass)): AuthBasic) -> Result<&'static str, StatusCode> {
+        Ok("OK")
+    }
+    async fn get_videojocs(AuthBasic((user, pass)): AuthBasic, State(spg_state): State<SerPGState>) -> Result<Json<Vec<VideojocAPI>>, StatusCode> {
+        Self::check_auth(user, pass, &spg_state)?;
         let mut videojocs_list = Vec::new();
         for path in fs::read_dir(spg_state.videojocs_path).unwrap() {
             let videojoc = path.unwrap().file_name().to_str().unwrap().to_string();
@@ -68,9 +82,10 @@ impl SerPG {
                 }
             );
         }
-        Json(videojocs_list)
+        Ok(Json(videojocs_list))
     }
-    async fn get_partides_guardades(State(spg_state): State<SerPGState>, Path(videojoc_id): Path<String>) -> Json<Vec<PartidaGuardadaAPI>> {
+    async fn get_partides_guardades(AuthBasic((user, pass)): AuthBasic, State(spg_state): State<SerPGState>, Path(videojoc_id): Path<String>) -> Result<Json<Vec<PartidaGuardadaAPI>>, StatusCode> {
+        Self::check_auth(user, pass, &spg_state)?;
         let mut partides_list = Vec::new();
         let videojoc_path = format!("{}/{}", spg_state.videojocs_path, videojoc_id);
         if !PathBuf::from(&videojoc_path).exists() {
@@ -88,17 +103,19 @@ impl SerPG {
                 }
             );
         }
-        Json(partides_list)
+        Ok(Json(partides_list))
     }
-    async fn get_partida_guardada(State(spg_state): State<SerPGState>, Path((videojoc_id, partida_id)): Path<(String, String)>) -> Json<PartidaGuardadaContingutAPI> {
+    async fn get_partida_guardada(AuthBasic((user, pass)): AuthBasic, State(spg_state): State<SerPGState>, Path((videojoc_id, partida_id)): Path<(String, String)>) -> Result<Json<PartidaGuardadaContingutAPI>, StatusCode> {
+        Self::check_auth(user, pass, &spg_state)?;
         let partida_path = format!("{}/{}/{}", spg_state.videojocs_path, videojoc_id, partida_id);
         let mut contingut = String::new();
         let mut f = File::open(partida_path).unwrap();
         f.read_to_string(&mut contingut).unwrap();
         drop(f);
-        Json(PartidaGuardadaContingutAPI{nom: partida_id, contingut})
+        Ok(Json(PartidaGuardadaContingutAPI{nom: partida_id, contingut}))
     }
-    async fn post_partida_guardada(State(spg_state): State<SerPGState>, Path(videojoc_id): Path<String>, Json(partida_nova): Json<PartidaGuardadaContingutAPI>) {
+    async fn post_partida_guardada(AuthBasic((user, pass)): AuthBasic, State(spg_state): State<SerPGState>, Path(videojoc_id): Path<String>, Json(partida_nova): Json<PartidaGuardadaContingutAPI>) -> Result<(), StatusCode> {
+        Self::check_auth(user, pass, &spg_state)?;
         let partida_path = format!("{}/{}/{}", spg_state.videojocs_path, videojoc_id, partida_nova.nom.clone());
         let videojoc_path = format!("{}/{}", spg_state.videojocs_path, videojoc_id);
         if !PathBuf::from(&videojoc_path).exists() {
@@ -108,11 +125,12 @@ impl SerPG {
         f.write_all(partida_nova.contingut.as_bytes()).unwrap();
         f.sync_all().unwrap();
         drop(f);
+        Ok(())
     }
 }
 #[tokio::main]
 async fn main() {
-    SerPG::new("".to_string()).start(None).await;
+    SerPG::new("".to_string(), "admin".to_string(), "admin".to_string()).start(None).await;
 }
 
 #[cfg(test)]
@@ -130,7 +148,7 @@ pub mod tests {
         // Fem el servidor
         let test_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures").to_str().unwrap().to_string();
         tokio::spawn(async {
-            SerPG::new(test_path).start(Some("3001".to_string())).await;
+            SerPG::new(test_path, "admin".to_string(), "admin".to_string()).start(Some("3001".to_string())).await;
         });
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
     }
