@@ -1,0 +1,8 @@
+[server]
+url = "http://localhost:8000"
+usuari = "admin"
+contrasenya = "admin"
+
+[[videojocs_habilitats.list]]
+nom = "Space Marine 3"
+path = "/home/patata/Space Marine 3"

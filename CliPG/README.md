@@ -109,16 +109,17 @@
 
 #### Mètodes
 
-| Fet | Mètode                                   | Retorn / Paràmetres   | Descripció                                                                                                                                 |
-|----|------------------------------------------|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| ✅  | `default() -> Self`                      | `CliPG`               | Constructor per defecte (pots cridar `get_credentials()`).                                                                                 |
-| ✅  | `load_local_jocs()`                      | `Vec<VideojocConfig>` | Carrega tots els jocs locals (crea instàncies `Videojoc` amb la seva carpeta). Retorna una llista amb els jocs que no s'han pogut carregar |
-| ✅ | `sync_all()`                             | `()`                  | Sincronitza tots els jocs.                                                                                                                 |
-| ✅   | `sync_joc(joc: &mut Videojoc)`           | `String`              | Sincronitza un joc concret amb el servidor.                                                                                                |
-| x  | `show_status()`                          | `()`                  | Mostra estat global de sincronització.                                                                                                     |
-| ✅  | `get_config_path() -> PathBuf`           | `()`                  | Retorna el path al fitxer de configuracio.                                                                                                 |
-| ✅  | `save_config(config: CliPgConfig)`       | `()`                  | Guarda al disc la configuracio proporcionada.                                                                                              |
-| ✅  | `load_or_create_config() -> CliPgConfig` | `()`                  | Carrega al configuracio que hi hagi guardada actualemtnen disc                                                                             |
+| Fet | Mètode                                                    | Retorn / Paràmetres   | Descripció                                                                                                                                 |
+|----|-----------------------------------------------------------|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| ✅  | `default() -> Self`                                       | `CliPG`               | Constructor per defecte (pots cridar `get_credentials()`).                                                                                 |
+| ✅  | `load_local_jocs()`                                       | `Vec<VideojocConfig>` | Carrega tots els jocs locals (crea instàncies `Videojoc` amb la seva carpeta). Retorna una llista amb els jocs que no s'han pogut carregar |
+| ✅ | `sync_all()`                                              | `()`                  | Sincronitza tots els jocs.                                                                                                                 |
+| ✅   | `sync_joc(joc: &mut Videojoc)`                            | `String`              | Sincronitza un joc concret amb el servidor.                                                                                                |
+| ✅  | `get_config_path() -> PathBuf`                            | `()`                  | Retorna el path al fitxer de configuracio.                                                                                                 |
+| ✅  | `save_config(config: CliPgConfig)`                        | `()`                  | Guarda al disc la configuracio proporcionada.                                                                                              |
+| ✅  | `load_or_create_config() -> CliPgConfig`                  | `()`                  | Carrega al configuracio que hi hagi guardada actualemtnen disc                                                                             |
+| ✅  | `afegir_joc(path: String) -> Result<(), String>`          | `()`                  | Afegeix un joc als jocs habilitats (`config.videojocs_habilitats`)                                                                         |
+| ✅  | `eliminar_joc(videojoc_id: String) -> Result<(), String>` | `()`                  | Eliminar un joc als jocs habilitats (`config.videojocs_habilitats`)                                                                        |
 
 #### Structs que representen les dades guardades de la aplicació:
 
@@ -141,15 +142,6 @@
 ## 2. Flux de la interfície (UI)
 
 Per la UI es farà servir `egui`.
-
-
-#### Notes Generals
-
-1. Cada `Videojoc` coneix la seva carpeta local → no cal atribut global `local_folder`.
-2. Cada `Videojoc` té la llista de partides locals i del servidor → sincronització encapsulada.
-3. `CliPG` només gestiona la llista de jocs i la crida a sincronització global.
-4. Permet escalar fàcilment a més jocs i més metadades sense tocar el client.
-
 
 ### 2.1 Inici de l’aplicació
 
@@ -230,6 +222,13 @@ Iniciar sincronització
 
 ## 3. Lògica de sincronització
 
+#### Notes Generals
+
+1. Cada `Videojoc` coneix la seva carpeta local → no cal atribut global `local_folder`.
+2. Cada `Videojoc` té la llista de partides locals i del servidor → sincronització encapsulada.
+3. `CliPG` només gestiona la llista de jocs i la crida a sincronització global.
+4. Permet escalar fàcilment a més jocs i més metadades sense tocar el client.
+
 ### 3.1 Procés general
 
 1. Llegir partides locals
@@ -261,3 +260,19 @@ No es sobreescriu mai informació.
 
 
 ---
+
+## 4. CLI per consola de comandes
+
+```
+Usage: CliPG [OPTIONS]
+
+Options:
+
+-l, --list                  Mostra tots els videojocs habilitats per sincornitzar-se
+-a, --add <videojoc_path>   Afegeix un videojoc amb la ruta donada
+-r, --remove <videojoc_id>  Elimina un videojoc pel seu ID
+-s, --sync_all              Sincronitza tots els videojocs
+-v, --sync <videojoc_id>    Sincronitza un videojoc pel seu ID
+-h, --help                  Print help
+-V, --version               Print version
+```

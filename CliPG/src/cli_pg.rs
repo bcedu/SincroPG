@@ -5,11 +5,13 @@ use serde::{Deserialize, Serialize};
 use directories::ProjectDirs;
 use std::fs;
 use std::path::PathBuf;
+use clap::builder::Str;
 
 pub struct CliPG {
     api: PgAPI,
-    vjocs: Vec<Videojoc>,
-    config: CliPgConfig,
+    pub vjocs: Vec<Videojoc>,
+    pub config: CliPgConfig,
+    config_path: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -41,7 +43,7 @@ pub struct ServerConfig {
 pub struct VideojocConfigList {
     pub list: Vec<VideojocConfig>
 }
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct VideojocConfig {
     pub nom: String,
     pub path: String,
@@ -57,12 +59,48 @@ impl CliPG {
     }
     pub fn default() -> Self {
         // Obtenim les credencials per el client
-        let config = Self::load_or_create_config(None);
+        let config_path = Self::get_config_path();
+        let config = Self::load_or_create_config(Some(config_path.clone()));
         let credencials: (String, String, String) = Self::get_credentials(&config.server);
         CliPG {
             api: PgAPI::new(credencials.0, credencials.1, credencials.2),
             vjocs: Vec::new(),
-            config
+            config,
+            config_path: config_path.to_str().unwrap().to_string()
+        }
+    }
+    pub fn afegir_joc(&mut self, path: String) -> Result<(), String> {
+        let pbuf = PathBuf::from(&path);
+        if pbuf.exists() {
+            let v = VideojocConfig{
+                nom: pbuf.file_name().unwrap().to_str().unwrap().to_string(),
+                path
+            };
+            if !self.config.videojocs_habilitats.list.contains(&v) {
+                self.config.videojocs_habilitats.list.push(v);
+                Self::save_config(&self.config, Some(PathBuf::from(self.config_path.clone())));
+            }
+            Ok(())
+        } else {
+            Err(format!("\"{}\" no existeix.", path))
+        }
+    }
+    pub fn eliminar_joc(&mut self, videojoc_id: String) -> Result<(), String> {
+        let mut i = 0;
+        let mut trobat = false;
+        for vc in self.config.videojocs_habilitats.list.iter() {
+            if vc.nom == videojoc_id {
+                self.config.videojocs_habilitats.list.remove(i);
+                Self::save_config(&self.config, Some(PathBuf::from(self.config_path.clone())));
+                trobat = true;
+                break;
+            }
+            i = i + 1;
+        }
+        if trobat {
+            Ok(())
+        } else {
+            Err(format!("\"{}\" no era un joc habilitat.", videojoc_id))
         }
     }
     fn get_config_path() -> PathBuf {
@@ -78,13 +116,13 @@ impl CliPG {
         }
         if !cpath.exists() {
             let config = CliPgConfig::default();
-            Self::save_config(config, None);
+            Self::save_config(&config, None);
         }
         let content = fs::read_to_string(&cpath).unwrap();
         let config = toml::from_str(&content).unwrap();
         config
     }
-    fn save_config(config: CliPgConfig, path: Option<PathBuf>) {
+    fn save_config(config: &CliPgConfig, path: Option<PathBuf>) {
         let cpath;
         if path.is_none() {
             cpath = Self::get_config_path();
@@ -94,7 +132,7 @@ impl CliPG {
         if let Some(dir) = cpath.parent() {
             fs::create_dir_all(dir).unwrap();
         }
-        let toml = toml::to_string_pretty(&config).unwrap();
+        let toml = toml::to_string_pretty(config).unwrap();
         fs::write(cpath, toml).unwrap();
     }
     fn load_local_jocs(&mut self) -> Vec<VideojocConfig> {
@@ -113,13 +151,14 @@ impl CliPG {
         }
         error_jocs
     }
-    fn sync_joc(&self, joc: &Videojoc) -> String {
+    pub fn sync_joc(&self, joc: &Videojoc) -> String {
         let mut joc_m = Videojoc::from(joc);
         let joc_res = joc_m.sync(&self.api, false);
         format!("* {}:\n{joc_res}", joc.nom.clone().to_str().unwrap())
     }
-    fn sync_all(&mut self) -> String {
+    pub fn sync_all(&mut self) -> String {
         let res = "";
+        self.load_local_jocs();
         for v in self.vjocs.iter() {
             let joc_res = self.sync_joc(v);
             let res = format!("{}\n{}", res, joc_res);
@@ -149,6 +188,7 @@ pub mod tests {
         let usuari = "admin".to_string();
         let contrassenya = "pass".to_string();
         let mut config = CliPgConfig::default();
+        let test_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/dummy_conf.toml");
         config.videojocs_habilitats.list.push(VideojocConfig {
             nom: "Napoleon TW".to_string(),
             path: "/home/patata/Napoleon TW".to_string()
@@ -161,6 +201,7 @@ pub mod tests {
             api: PgAPI::new(url.clone(), usuari.clone(), contrassenya.clone()),
             vjocs: Vec::new(),
             config: config,
+            config_path: test_path.to_str().unwrap().to_string()
         }
     }
     fn get_correct_dummy_cli_pg() -> CliPG {
@@ -169,6 +210,7 @@ pub mod tests {
         let contrassenya = "pass".to_string();
         let mut config = CliPgConfig::default();
         let test_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/path a videojocs");
+        let conf_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/dummy_conf.toml");
         config.videojocs_habilitats.list.push(VideojocConfig {
             nom: "Mount & blade Warband 2".to_string(),
             path: format!("{}/Mount & blade Warband 2", test_path.to_str().unwrap().clone())
@@ -185,6 +227,7 @@ pub mod tests {
             api: PgAPI::new(url.clone(), usuari.clone(), contrassenya.clone()),
             vjocs: Vec::new(),
             config: config,
+            config_path: conf_path.to_str().unwrap().to_string()
         }
     }
     fn read_file_sync(path: String) -> String {
@@ -210,7 +253,7 @@ pub mod tests {
         let mut conf = get_dummy_cli_pg().config;
         conf.server.url = "patata".to_string();
         let test_path = get_save_config_fixture_conf_path();
-        CliPG::save_config(conf, Some(test_path.clone()));
+        CliPG::save_config(&conf, Some(test_path.clone()));
         let c = read_file_sync(test_path.to_str().unwrap().to_string());
         let expected = "[server]\nurl = \"patata\"\nusuari = \"admin\"\ncontrasenya = \"admin\"\n\n[[videojocs_habilitats.list]]\nnom = \"Napoleon TW\"\npath = \"/home/patata/Napoleon TW\"\n\n[[videojocs_habilitats.list]]\nnom = \"Space Marine 3\"\npath = \"/home/patata/Space Marine 3\"\n";
         assert_eq!(c, expected);
@@ -250,5 +293,47 @@ pub mod tests {
     fn test_sync_all() {
         // NO testegem res ja que el metode sync_all nomes fa un bucle cridant el sync_joc
         assert!(true);
+    }
+    #[test]
+    fn test_afegir_joc() {
+        let mut cli = get_dummy_cli_pg();
+        assert_eq!(cli.config.videojocs_habilitats.list.len(), 2);
+        CliPG::save_config(&cli.config, Some(PathBuf::from(cli.config_path.clone())));
+        // Un path fictici no afegeix res
+        let err = cli.afegir_joc("/home/patata/Napoleon TW".to_string());
+        assert!(err.is_err());
+        assert_eq!(cli.config.videojocs_habilitats.list.len(), 2);
+        let res_cont = read_file_sync(cli.config_path.clone());
+        assert_eq!(res_cont, "[server]\nurl = \"http://localhost:8000\"\nusuari = \"admin\"\ncontrasenya = \"admin\"\n\n[[videojocs_habilitats.list]]\nnom = \"Napoleon TW\"\npath = \"/home/patata/Napoleon TW\"\n\n[[videojocs_habilitats.list]]\nnom = \"Space Marine 3\"\npath = \"/home/patata/Space Marine 3\"\n");
+        // Un path real si que afageix
+        let test_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/path a videojocs/Mount & blade Warband 2");
+        cli.afegir_joc(test_path.to_str().unwrap().to_string());
+        assert_eq!(cli.config.videojocs_habilitats.list.len(), 3);
+        let res_cont = read_file_sync(cli.config_path.clone());
+        assert_eq!(res_cont, "[server]\nurl = \"http://localhost:8000\"\nusuari = \"admin\"\ncontrasenya = \"admin\"\n\n[[videojocs_habilitats.list]]\nnom = \"Napoleon TW\"\npath = \"/home/patata/Napoleon TW\"\n\n[[videojocs_habilitats.list]]\nnom = \"Space Marine 3\"\npath = \"/home/patata/Space Marine 3\"\n\n[[videojocs_habilitats.list]]\nnom = \"Mount & blade Warband 2\"\npath = \"/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/path a videojocs/Mount & blade Warband 2\"\n");
+        // Un path repetit no fa res
+        let test_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/path a videojocs/Mount & blade Warband 2");
+        cli.afegir_joc(test_path.to_str().unwrap().to_string());
+        assert_eq!(cli.config.videojocs_habilitats.list.len(), 3);
+        let res_cont = read_file_sync(cli.config_path.clone());
+        assert_eq!(res_cont, "[server]\nurl = \"http://localhost:8000\"\nusuari = \"admin\"\ncontrasenya = \"admin\"\n\n[[videojocs_habilitats.list]]\nnom = \"Napoleon TW\"\npath = \"/home/patata/Napoleon TW\"\n\n[[videojocs_habilitats.list]]\nnom = \"Space Marine 3\"\npath = \"/home/patata/Space Marine 3\"\n\n[[videojocs_habilitats.list]]\nnom = \"Mount & blade Warband 2\"\npath = \"/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/path a videojocs/Mount & blade Warband 2\"\n");
+    }
+    #[test]
+    fn test_eliminar_joc() {
+        let mut cli = get_dummy_cli_pg();
+        assert_eq!(cli.config.videojocs_habilitats.list.len(), 2);
+        CliPG::save_config(&cli.config, Some(PathBuf::from(cli.config_path.clone())));
+        // Un videojoc_id dona error
+        let err = cli.eliminar_joc("PATATA".to_string());
+        assert!(err.is_err());
+        assert_eq!(cli.config.videojocs_habilitats.list.len(), 2);
+        let res_cont = read_file_sync(cli.config_path.clone());
+        assert_eq!(res_cont, "[server]\nurl = \"http://localhost:8000\"\nusuari = \"admin\"\ncontrasenya = \"admin\"\n\n[[videojocs_habilitats.list]]\nnom = \"Napoleon TW\"\npath = \"/home/patata/Napoleon TW\"\n\n[[videojocs_habilitats.list]]\nnom = \"Space Marine 3\"\npath = \"/home/patata/Space Marine 3\"\n");
+        // Un videojoc_id que elimina
+        let test_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/path a videojocs/Mount & blade Warband 2");
+        cli.eliminar_joc("Napoleon TW".to_string());
+        assert_eq!(cli.config.videojocs_habilitats.list.len(), 1);
+        let res_cont = read_file_sync(cli.config_path.clone());
+        assert_eq!(res_cont, "[server]\nurl = \"http://localhost:8000\"\nusuari = \"admin\"\ncontrasenya = \"admin\"\n\n[[videojocs_habilitats.list]]\nnom = \"Space Marine 3\"\npath = \"/home/patata/Space Marine 3\"\n");
     }
 }

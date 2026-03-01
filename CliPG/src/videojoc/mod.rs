@@ -10,7 +10,7 @@ use chrono::Local;
 
 pub struct Videojoc {
     pub nom: OsString,
-    local_folder: PathBuf,
+    pub local_folder: PathBuf,
     partides_locals: Vec<PartidaGuardada>,
     partides_remotes: Vec<PartidaGuardada>,
 }
