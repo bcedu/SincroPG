@@ -14,6 +14,7 @@ use std::{
     path::PathBuf,
 };
 use normalized_hash::Hasher;
+use clap::{Arg, Command};
 #[derive(Clone)]
 struct SerPGState {
     videojocs_path: String,
@@ -130,7 +131,53 @@ impl SerPG {
 }
 #[tokio::main]
 async fn main() {
-    SerPG::new("".to_string(), "admin".to_string(), "admin".to_string()).start(None).await;
+    let matches = Command::new("SerPG")
+        .version("1.0")
+        .author("Bcedu")
+        .about("Pastanaga Bullida")
+        .arg_required_else_help(true) // Mostra ajuda si no hi ha arguments
+        .arg(
+            Arg::new("username")
+                .short('u')
+                .long("username")
+                .help("Nom d'usuari")
+                .num_args(1)
+                .value_name("username")
+                .required(true)
+        )
+        .arg(
+            Arg::new("password")
+                .short('w')
+                .long("password")
+                .help("Contrasenya")
+                .num_args(1)
+                .value_name("password")
+                .required(true)
+        )
+        .arg(
+            Arg::new("port")
+                .short('p')
+                .long("port")
+                .help("Numero de port on esoclta el servidor")
+                .num_args(1)
+                .value_name("port")
+                .required(true)
+        )
+        .arg(
+            Arg::new("path")
+                .short('d')
+                .long("path")
+                .help("Directori on es sincronitzen les partides guardades")
+                .num_args(1)
+                .value_name("path")
+                .required(true)
+        )
+        .get_matches();
+    let username = matches.get_one::<String>("username");
+    let password = matches.get_one::<String>("password");
+    let port = matches.get_one::<String>("port");
+    let path = matches.get_one::<String>("path");
+    SerPG::new(path.unwrap().to_string(), username.unwrap().to_string(), password.unwrap().to_string()).start(Some(port.unwrap().to_string())).await;
 }
 
 #[cfg(test)]
