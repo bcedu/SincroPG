@@ -1,19 +1,19 @@
-use std::ffi::OsString;
-use std::path::PathBuf;
-use std::fs;
-use std::fs::File;
-use std::io::{Write, Read};
-use normalized_hash::Hasher;
-use filetime::FileTime;
 use crate::pg_api::PartidesGuardadesAPI;
 use crate::videojoc::Videojoc;
+use filetime::FileTime;
+use normalized_hash::Hasher;
+use std::ffi::OsString;
+use std::fs;
+use std::fs::File;
+use std::io::{Read, Write};
+use std::path::PathBuf;
 
 pub struct PartidaGuardada {
     pub videojoc: String,
     pub nom: OsString,
     pub path: PathBuf,
     pub timestamp: u32,
-    pub hash: String
+    pub hash: String,
 }
 
 impl PartidaGuardada {
@@ -30,7 +30,7 @@ impl PartidaGuardada {
         }
         PartidaGuardada {
             videojoc: "".to_string(),
-            nom: full_path.file_name().unwrap_or_else(|| { panic!("La ruta {path} no és correcte!") }).to_os_string(),
+            nom: full_path.file_name().unwrap_or_else(|| panic!("La ruta {path} no és correcte!")).to_os_string(),
             hash: hash,
             path: full_path,
             timestamp: timestamp,
@@ -86,19 +86,30 @@ impl PartidaGuardada {
     }
 }
 
-
 #[cfg(test)]
 pub mod tests {
-    use crate::videojoc::tests::get_fake_api;
     use super::*;
+    use crate::videojoc::tests::get_fake_api;
     fn get_partida_path_ntw_s1() -> String {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_partida_guardada/path a videojocs/Napoleón TW HD/save1.txt").to_str().unwrap().to_string()
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures_partida_guardada/path a videojocs/Napoleón TW HD/save1.txt")
+            .to_str()
+            .unwrap()
+            .to_string()
     }
     fn get_partida_path_w40k_s1() -> String {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_partida_guardada/path a videojocs/Total War 40k/save1.txt").to_str().unwrap().to_string()
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures_partida_guardada/path a videojocs/Total War 40k/save1.txt")
+            .to_str()
+            .unwrap()
+            .to_string()
     }
     fn get_partida_path_w40k_sremota() -> String {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_partida_guardada/path a videojocs/Total War 40k/save_remot.txt").to_str().unwrap().to_string()
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures_partida_guardada/path a videojocs/Total War 40k/save_remot.txt")
+            .to_str()
+            .unwrap()
+            .to_string()
     }
     pub fn get_partida_ntw_s1() -> PartidaGuardada {
         PartidaGuardada::new(get_partida_path_ntw_s1())
@@ -126,7 +137,6 @@ pub mod tests {
         assert_eq!(copia.timestamp, 288718000);
         assert_eq!(copia.hash, "02d47a22e09f46731a58dbe7cb299c0315c6760aec7557e8ca6e87090fc85dfd");
         assert_eq!(copia.path.to_str().unwrap(), pg.path.to_str().unwrap());
-
     }
     #[test]
     fn test_update_metadata() {

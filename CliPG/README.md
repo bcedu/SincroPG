@@ -109,7 +109,7 @@
 
 #### Mètodes
 
-| Fet | Mètode                                                    | Retorn / Paràmetres   | Descripció                                                                                                                                 |
+| Fet | Mètode                                                     | Retorn / Paràmetres   | Descripció                                                                                                                                 |
 |----|-----------------------------------------------------------|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
 | ✅  | `default() -> Self`                                       | `CliPG`               | Constructor per defecte (pots cridar `get_credentials()`).                                                                                 |
 | ✅  | `load_local_jocs()`                                       | `Vec<VideojocConfig>` | Carrega tots els jocs locals (crea instàncies `Videojoc` amb la seva carpeta). Retorna una llista amb els jocs que no s'han pogut carregar |

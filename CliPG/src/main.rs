@@ -38,16 +38,10 @@ fn main() {
                 .num_args(1)
                 .value_name("videojoc_id"),
         )
-        .arg(
-            Arg::new("sync_all")
-                .short('s')
-                .long("sync_all")
-                .help("Sincronitza tots els videojocs")
-                .action(clap::ArgAction::SetTrue),
-        )
+        .arg(Arg::new("sync_all").short('s').long("sync_all").help("Sincronitza tots els videojocs").action(clap::ArgAction::SetTrue))
         .get_matches();
 
-    let mut clipg = CliPG::default(); 
+    let mut clipg = CliPG::default();
     if matches.get_flag("list") {
         for v in clipg.config.videojocs_habilitats.list.iter() {
             println!("* {}\n    -> {}\n", v.nom, v.path);
@@ -67,4 +61,3 @@ fn main() {
         println!("{res}");
     }
 }
-

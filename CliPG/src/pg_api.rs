@@ -1,9 +1,9 @@
-use std::fmt::format;
+use crate::videojoc::Videojoc;
+use crate::videojoc::partida_guardada::PartidaGuardada;
 use eframe::egui::TextBuffer;
 use reqwest::Response;
-use crate::videojoc::partida_guardada::PartidaGuardada;
-use crate::videojoc::Videojoc;
 use serde::{Deserialize, Serialize};
+use std::fmt::format;
 use urlencoding::encode;
 
 pub trait PartidesGuardadesAPI {
@@ -34,15 +34,18 @@ struct VideojocAPI {
 #[derive(Debug, Deserialize)]
 struct PartidaGuardadaAPI {
     nom: String,
-    hash: String
+    hash: String,
 }
 #[derive(Debug, Deserialize, Serialize)]
 struct PartidaGuardadaContingutAPI {
     nom: String,
-    contingut: String
+    contingut: String,
 }
 #[derive(Debug)]
-enum RTYPE {GET, POST}
+enum RTYPE {
+    GET,
+    POST,
+}
 
 impl PgAPI {
     pub fn new(url: String, usuari: String, contrassenya: String) -> Self {
@@ -50,7 +53,7 @@ impl PgAPI {
             url,
             usuari,
             contrassenya,
-            client: reqwest::blocking::Client::new()
+            client: reqwest::blocking::Client::new(),
         }
     }
     fn make_get_request(&self, endpoint: &str) -> reqwest::blocking::Response {
@@ -68,35 +71,22 @@ impl PgAPI {
         let response;
         match rtype {
             RTYPE::GET => {
-                response = self.client
-                    .get(request_url)
-                    .basic_auth(self.usuari.clone(), Some(self.contrassenya.clone()))
-                    .send();
+                response = self.client.get(request_url).basic_auth(self.usuari.clone(), Some(self.contrassenya.clone())).send();
             }
-            RTYPE::POST => {
-                match body {
-                    Some(body) => {
-                        response = self.client
-                            .post(request_url)
-                            .basic_auth(self.usuari.clone(), Some(self.contrassenya.clone()))
-                            .json(&body)
-                            .send();
-                    }
-                    None => {
-                        response = self.client
-                            .post(request_url)
-                            .basic_auth(self.usuari.clone(), Some(self.contrassenya.clone()))
-                            .send();
-                    }
+            RTYPE::POST => match body {
+                Some(body) => {
+                    response = self.client.post(request_url).basic_auth(self.usuari.clone(), Some(self.contrassenya.clone())).json(&body).send();
                 }
-            }
+                None => {
+                    response = self.client.post(request_url).basic_auth(self.usuari.clone(), Some(self.contrassenya.clone())).send();
+                }
+            },
         }
         response.unwrap()
     }
 }
 
 impl PartidesGuardadesAPI for PgAPI {
-
     fn probar_connexio(&self) -> bool {
         // GET /api/v1/test
         self.make_get_request("test").status().is_success()
@@ -105,7 +95,7 @@ impl PartidesGuardadesAPI for PgAPI {
         // GET /api/v1/videojocs
         let mut videojocs = Vec::new();
         let response = self.make_get_request("videojocs");
-        let videojocs_server:  Vec<VideojocAPI>  = response.json().unwrap();
+        let videojocs_server: Vec<VideojocAPI> = response.json().unwrap();
         for v in videojocs_server {
             videojocs.push(v.nom);
         }
@@ -117,7 +107,7 @@ impl PartidesGuardadesAPI for PgAPI {
         let mut partides = Vec::new();
         let request_url = format!("videojocs/{nom_videojoc}/partides");
         let response = self.make_get_request(request_url.as_str());
-        let partides_server:  Vec<PartidaGuardadaAPI>  = response.json().unwrap();
+        let partides_server: Vec<PartidaGuardadaAPI> = response.json().unwrap();
         for p in partides_server {
             let pg = PartidaGuardada::new(p.nom).with_hash(p.hash).with_videojoc(&v);
             partides.push(pg);
@@ -131,9 +121,9 @@ impl PartidesGuardadesAPI for PgAPI {
         }
         let request_url = format!("videojocs/{}/partides", partida_guardada.videojoc);
         let content = partida_guardada.read_file_sync();
-        let pa = PartidaGuardadaContingutAPI{
+        let pa = PartidaGuardadaContingutAPI {
             nom: partida_guardada.nom.to_str().unwrap().to_string(),
-            contingut: content
+            contingut: content,
         };
         self.make_post_request(request_url.as_str(), pa);
     }
@@ -150,12 +140,12 @@ impl PartidesGuardadesAPI for PgAPI {
 
 #[cfg(test)]
 pub mod tests {
-    use std::path::PathBuf;
-    use eframe::egui::TextBuffer;
-    use mockito::{Mock, Server};
-    use urlencoding::encode;
     use crate::pg_api::{PartidesGuardadesAPI, PgAPI};
     use crate::videojoc::partida_guardada::PartidaGuardada;
+    use eframe::egui::TextBuffer;
+    use mockito::{Mock, Server};
+    use std::path::PathBuf;
+    use urlencoding::encode;
     fn get_pg_api(url: String) -> PgAPI {
         PgAPI::new(url, String::from("admin"), String::from("pastanagabullida"))
     }
@@ -168,7 +158,8 @@ pub mod tests {
         let _mock = server
             .mock("GET", encoded.as_str())
             .match_header("authorization", "Basic YWRtaW46cGFzdGFuYWdhYnVsbGlkYQ==")
-            .with_status(200).expect(1);
+            .with_status(200)
+            .expect(1);
         (server, _mock)
     }
     fn setup_fake_server_probar_connexio() -> mockito::ServerGuard {
@@ -178,20 +169,30 @@ pub mod tests {
     }
     fn setup_fake_server_get_videojocs() -> mockito::ServerGuard {
         let (server, _mock) = get_fake_server("videojocs");
-        _mock.with_header("content-type", "application/json").with_body(r#"[
+        _mock
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"[
             { "id": "m", "nom": "Mount & blade Warband 2" },
             { "id": "n", "nom": "Napoleón TW HD" },
             { "id": "t", "nom": "Total War 40k" }
-        ]"#).create();
+        ]"#,
+            )
+            .create();
         server
     }
     fn setup_fake_server_get_partides_guardades(nom_videojoc: String) -> mockito::ServerGuard {
         let (server, _mock) = get_fake_server(format!("videojocs/{nom_videojoc}/partides").as_str());
-        _mock.with_header("content-type", "application/json").with_body(r#"[
+        _mock
+            .with_header("content-type", "application/json")
+            .with_body(
+                r#"[
             { "nom": "save1.txt", "hash": "patata" },
             { "nom": "save", "hash": "pastanaga" },
             { "nom": "1234@.xml,1", "hash": "@@" }
-        ]"#).create();
+        ]"#,
+            )
+            .create();
         server
     }
     fn setup_fake_server_post_partida_guardada(nom_videojoc: String) -> (mockito::ServerGuard, Mock) {
@@ -219,7 +220,11 @@ pub mod tests {
         server
     }
     fn get_partida_path_ntw_s1() -> String {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_pg_api/path a videojocs/Napoleón TW HD/save1.txt").to_str().unwrap().to_string()
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures_pg_api/path a videojocs/Napoleón TW HD/save1.txt")
+            .to_str()
+            .unwrap()
+            .to_string()
     }
     pub fn get_partida_ntw_s1() -> PartidaGuardada {
         let mut pg = PartidaGuardada::new(get_partida_path_ntw_s1());
@@ -276,6 +281,6 @@ pub mod tests {
         let server = setup_fake_server_get_partida_guardada(nom_videojoc.to_string(), partida.nom.to_str().unwrap().to_string());
         let pgapi = get_pg_api(server.url().clone());
         let content = pgapi.get_partida_guardada(&partida);
-        assert_eq!(content,  "Pastanaga Bullida À@");
+        assert_eq!(content, "Pastanaga Bullida À@");
     }
 }

@@ -1,12 +1,12 @@
 pub mod partida_guardada;
 
-use std::collections::HashMap;
-use partida_guardada::*;
 use crate::pg_api::{PartidesGuardadesAPI, PgAPI};
-use std::path::PathBuf;
+use chrono::Local;
+use partida_guardada::*;
+use std::collections::HashMap;
 use std::ffi::OsString;
 use std::fs;
-use chrono::Local;
+use std::path::PathBuf;
 
 pub struct Videojoc {
     pub nom: OsString,
@@ -18,14 +18,12 @@ pub struct Videojoc {
 impl Videojoc {
     pub fn new(path: String) -> Self {
         let local_folder = PathBuf::from(path.clone());
-        let nom = local_folder.file_name().unwrap_or_else(|| {
-            panic!("La ruta {path} no és correcte!")
-        }).to_os_string();
+        let nom = local_folder.file_name().unwrap_or_else(|| panic!("La ruta {path} no és correcte!")).to_os_string();
         Videojoc {
             nom,
             local_folder,
             partides_locals: Vec::new(),
-            partides_remotes: Vec::new()
+            partides_remotes: Vec::new(),
         }
     }
     pub fn from(videojoc: &Videojoc) -> Self {
@@ -45,9 +43,7 @@ impl Videojoc {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_file() {
-                self.partides_locals.push(
-                    PartidaGuardada::new(path.to_str().unwrap().to_string()).with_videojoc(self)
-                );
+                self.partides_locals.push(PartidaGuardada::new(path.to_str().unwrap().to_string()).with_videojoc(self));
             }
         }
     }
@@ -62,22 +58,10 @@ impl Videojoc {
         self.load_partides_locals();
         self.fetch_partides_remotes(api);
         // Indexem per nom
-        let locals: HashMap<String, &PartidaGuardada> = self
-            .partides_locals
-            .iter()
-            .map(|p| (p.nom.to_str().unwrap().to_string(), p))
-            .collect();
-        let remotes: HashMap<String, &PartidaGuardada> = self
-            .partides_remotes
-            .iter()
-            .map(|p| (p.nom.to_str().unwrap().to_string(), p))
-            .collect();
+        let locals: HashMap<String, &PartidaGuardada> = self.partides_locals.iter().map(|p| (p.nom.to_str().unwrap().to_string(), p)).collect();
+        let remotes: HashMap<String, &PartidaGuardada> = self.partides_remotes.iter().map(|p| (p.nom.to_str().unwrap().to_string(), p)).collect();
         // Unió de totes les partides
-        let mut noms: Vec<String> = locals
-            .keys()
-            .chain(remotes.keys())
-            .cloned()
-            .collect();
+        let mut noms: Vec<String> = locals.keys().chain(remotes.keys()).cloned().collect();
         // Eliminem duplicats
         noms.sort();
         noms.dedup();
@@ -138,7 +122,7 @@ impl Videojoc {
             api.post_partida_guardada(&remot);
             // Pujem la partida local al servidor (aixo sobreescriu la que hi havia)
             api.post_partida_guardada(&local);
-        }  else {
+        } else {
             // Creem una nova partida local amb el nom nou
             local.duplicar_fitxer(nou_nom);
             // Descarreguem la remota per actualitzar la original
@@ -153,10 +137,10 @@ pub mod tests {
     use crate::videojoc::partida_guardada::tests::get_partida_ntw_s1;
     pub struct FakeAPI;
     impl PartidesGuardadesAPI for FakeAPI {
-        fn probar_connexio(&self) -> bool{
+        fn probar_connexio(&self) -> bool {
             true
         }
-        fn get_videojocs(&self) ->Vec<String> {
+        fn get_videojocs(&self) -> Vec<String> {
             Vec::new()
         }
         fn get_partides_guardades(&self, _: String) -> Vec<PartidaGuardada> {
@@ -197,7 +181,11 @@ pub mod tests {
         }
     }
     fn get_videojoc_path_w40k() -> String {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_videojoc/path a videojocs/Total War 40k/").to_str().unwrap().to_string()
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures_videojoc/path a videojocs/Total War 40k/")
+            .to_str()
+            .unwrap()
+            .to_string()
     }
     fn get_videojoc_w40k() -> Videojoc {
         Videojoc::new(get_videojoc_path_w40k())
