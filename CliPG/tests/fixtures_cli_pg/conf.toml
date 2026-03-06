@@ -6,7 +6,9 @@ contrasenya = "admin"
 [[videojocs_habilitats.list]]
 nom = "Napoleon TW"
 path = "/home/patata/Napoleon TW"
+partides_guardades = []
 
 [[videojocs_habilitats.list]]
 nom = "Space Marine 3"
 path = "/home/patata/Space Marine 3"
+partides_guardades = []

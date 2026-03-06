@@ -1,5 +1,6 @@
 pub mod partida_guardada;
 
+use crate::cli_pg::PartidaGuardadaConfig;
 use crate::pg_api::{PartidesGuardadesAPI, PgAPI};
 use chrono::Local;
 use partida_guardada::*;
@@ -11,8 +12,9 @@ use std::path::PathBuf;
 pub struct Videojoc {
     pub nom: OsString,
     pub local_folder: PathBuf,
-    partides_locals: Vec<PartidaGuardada>,
-    partides_remotes: Vec<PartidaGuardada>,
+    pub partides_locals: Vec<PartidaGuardada>,
+    pub partides_remotes: Vec<PartidaGuardada>,
+    pub partides_guardades: Vec<PartidaGuardadaConfig>,
 }
 
 impl Videojoc {
@@ -24,13 +26,18 @@ impl Videojoc {
             local_folder,
             partides_locals: Vec::new(),
             partides_remotes: Vec::new(),
+            partides_guardades: Vec::new(),
         }
     }
     pub fn from(videojoc: &Videojoc) -> Self {
-        Videojoc::new(videojoc.local_folder.to_str().unwrap().to_string())
+        Videojoc::new(videojoc.local_folder.to_str().unwrap().to_string()).with_partides_guardades(videojoc.partides_guardades.clone())
     }
     pub fn with_nom(mut self, nom: String) -> Self {
         self.nom = OsString::from(nom);
+        self
+    }
+    pub fn with_partides_guardades(mut self, partides_guardades: Vec<PartidaGuardadaConfig>) -> Self {
+        self.partides_guardades = partides_guardades;
         self
     }
     pub fn load_partides_locals(&mut self) {
@@ -43,7 +50,15 @@ impl Videojoc {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_file() {
-                self.partides_locals.push(PartidaGuardada::new(path.to_str().unwrap().to_string()).with_videojoc(self));
+                let mut last_remote_hash = "".to_string();
+                for p in self.partides_guardades.iter() {
+                    if p.path == path.to_str().unwrap().to_string() {
+                        last_remote_hash = p.hash.clone();
+                        break;
+                    }
+                }
+                self.partides_locals
+                    .push(PartidaGuardada::new(path.to_str().unwrap().to_string()).with_videojoc(self).with_last_remote_hash(last_remote_hash));
             }
         }
     }
@@ -72,7 +87,7 @@ impl Videojoc {
             match (locals.get(&nom), remotes.get(&nom)) {
                 // ⬆️ Només local
                 (Some(local), None) => {
-                    aux = format!("⬆️ Pujar partida local: {}", local.nom.to_str().unwrap().to_string());
+                    aux = format!("⬆️ Pujar partida local (nova partida): {}", local.nom.to_str().unwrap().to_string());
                     println!("{}", aux);
                     if !test_mode {
                         local.pujar_partida_guardada(api);
@@ -92,6 +107,12 @@ impl Videojoc {
                         // Iguals → no fer res
                         aux = format!("✔️ Partida OK: {}", local.nom.to_str().unwrap().to_string());
                         println!("{}", aux);
+                    } else if local.last_remote_hash != "" && local.last_remote_hash == remote.hash {
+                        aux = format!("⬆️ Pujar partida local (nova versió): {}", local.nom.to_str().unwrap().to_string());
+                        println!("{}", aux);
+                        if !test_mode {
+                            local.pujar_partida_guardada(api);
+                        }
                     } else {
                         // Diferents → conflicte
                         aux = format!("⚠️ Conflicte: {}", local.nom.to_str().unwrap().to_string());
@@ -109,7 +130,19 @@ impl Videojoc {
             resultat.push_str(aux.as_str());
             resultat.push('\n');
         }
+        self.actualitzar_partides_guardades();
         resultat
+    }
+    pub fn actualitzar_partides_guardades(&mut self) {
+        // Actualitzem les partides que han quedat al local per obtenir els seus hash i actualitzar el partides_guardades
+        self.load_partides_locals();
+        self.partides_guardades = Vec::new();
+        for partida in &self.partides_locals {
+            self.partides_guardades.push(PartidaGuardadaConfig {
+                path: partida.path.to_str().unwrap().to_string().clone(),
+                hash: partida.hash.clone(),
+            });
+        }
     }
     pub fn resoldre_conflicte<A: PartidesGuardadesAPI>(&self, local: &PartidaGuardada, remot: &PartidaGuardada, api: &A) {
         // Donarem prioritat al que tingui el timestamp mes recent. El que tingui el timestamp
@@ -151,6 +184,7 @@ pub mod tests {
                 path: PathBuf::new(),
                 timestamp: 245528886,
                 hash: "02d47a22e09f46731a58dbe7cb299c0315c6760aec7557e8ca6e87090fc85dfd".to_string(),
+                last_remote_hash: "".to_string(),
             };
             let p2 = PartidaGuardada {
                 videojoc: "".to_string(),
@@ -158,6 +192,7 @@ pub mod tests {
                 path: PathBuf::new(),
                 timestamp: 0,
                 hash: "".to_string(),
+                last_remote_hash: "".to_string(),
             };
             let p3 = PartidaGuardada {
                 videojoc: "".to_string(),
@@ -165,10 +200,20 @@ pub mod tests {
                 path: PathBuf::new(),
                 timestamp: 0,
                 hash: "".to_string(),
+                last_remote_hash: "".to_string(),
+            };
+            let p4 = PartidaGuardada {
+                videojoc: "".to_string(),
+                nom: OsString::from("save4.txt"),
+                path: PathBuf::new(),
+                timestamp: 0,
+                hash: "patata".to_string(),
+                last_remote_hash: "".to_string(),
             };
             v.push(p1);
             v.push(p2);
             v.push(p3);
+            v.push(p4);
             v
         }
         fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
@@ -217,9 +262,10 @@ pub mod tests {
         let mut v = get_videojoc_w40k();
         assert_eq!(v.partides_locals.len(), 0);
         v.load_partides_locals();
-        assert_eq!(v.partides_locals.len(), 3);
-        assert_eq!(v.partides_locals[2].nom, "save3.txt");
-        assert_eq!(v.partides_locals[1].nom, "save1.txt");
+        assert_eq!(v.partides_locals.len(), 4);
+        assert_eq!(v.partides_locals[3].nom, "save3.txt");
+        assert_eq!(v.partides_locals[2].nom, "save1.txt");
+        assert_eq!(v.partides_locals[1].nom, "save4.txt");
         assert_eq!(v.partides_locals[0].nom, "save2.txt");
     }
     #[test]
@@ -227,18 +273,30 @@ pub mod tests {
         let mut v = get_videojoc_w40k();
         let s = get_fake_api();
         v.fetch_partides_remotes(&s);
-        assert_eq!(v.partides_remotes.len(), 3);
+        assert_eq!(v.partides_remotes.len(), 4);
         assert_eq!(v.partides_remotes[0].nom, "save1.txt");
         assert_eq!(v.partides_remotes[1].nom, "save_test_2");
         assert_eq!(v.partides_remotes[2].nom, "save3.txt");
+        assert_eq!(v.partides_remotes[3].nom, "save4.txt");
     }
     #[test]
     fn test_sync() {
-        let mut v = get_videojoc_w40k();
+        // TODO: el constructor de un videojoc ha de acceptar un videojocConfig.
+        // Desde aquest videojocConfig guardarse les partidesConfig
+        // Al fer un load_partides_locals s'ha de emplenar el camp last_remote_hash desde el partidesConfig
+        // Despres de sincronitzar s'ha de actualitzar el partidesConfig (fer-ne un de nou)
+        // despres de un sync_all s'ha de guardar la configuracio total agafant les partides_config dels videojocs
+        let mut partides_guardades = Vec::new();
+        partides_guardades.push(PartidaGuardadaConfig {
+            path: format!("{}save4.txt", get_videojoc_path_w40k()),
+            hash: "patata".to_string(),
+        });
+        let mut v = get_videojoc_w40k().with_partides_guardades(partides_guardades);
         let resultat = v.sync(&get_fake_api(), true);
         let resultat_esperat = "✔️ Partida OK: save1.txt
-⬆️ Pujar partida local: save2.txt
+⬆️ Pujar partida local (nova partida): save2.txt
 ⚠️ Conflicte: save3.txt
+⬆️ Pujar partida local (nova versió): save4.txt
 ⬇️ Descarregar partida remota: save_test_2\n";
         assert_eq!(resultat_esperat, resultat);
     }

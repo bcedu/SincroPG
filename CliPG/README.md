@@ -14,6 +14,7 @@
 | `local_folder`     | `String`               | Carpeta local on estan les partides d’aquest joc.  |
 | `partides_locals`  | `Vec<PartidaGuardada>` | Llista de partides locals.                         |
 | `partides_remotes` | `Vec<PartidaGuardada>` | Partides que hi ha al servidor (per sincronitzar). |
+| `partides_guardades` | `Vec<PartidaGuardadaConfig>` | Partides guardades al client desde la ultima sincornitzacio.                    |
 
 #### Mètodes
 
@@ -41,6 +42,7 @@
 | `path`      | `String` | Ruta completa del fitxer local.                 |
 | `timestamp` | `u32`    | Última modificació (per comparar amb servidor). |
 | `hash`      | `String` | Hash de contingut per detectar canvis.          |
+| `last_remote_hash`      | `String` | Hash del últim contingut que tenim sincronitzat amb el servidor.          |
 
 #### Mètodes
 
@@ -135,7 +137,11 @@
 `VideojocConfig`:
 - `nom`: String
 - `path`: String
+- `partides_guardades`: Vec<PartidaGuardadaConfig>
 
+`PartidaGuardadaConfig`:
+- `path`: String
+- `hash`: String
 
 ---
 
@@ -233,8 +239,9 @@ Iniciar sincronització
 
 1. Llegir partides locals
 2. Llegir partides del servidor
-3. Comparar per ID, hash i timestamp
-4. Decidir acció
+3. Comparar per ID, hash i last_remote_hash
+4. Decidir acció per sincornitzar
+5. Actualitzar el CliPgConfig guardat en local per tindre els ultims hash sincronitzatsde cada partida
 
 ### 3.2 Casos possibles
 
@@ -242,21 +249,21 @@ Iniciar sincronització
 |-----|------|
 | Només local | ⬆️ Pujar al servidor |
 | Només servidor | ⬇️ Descarregar |
-| Iguals | ✔️ No fer res |
-| Diferents | ⚠ Conflicte |
+| Iguals (local.hash==servidor.hash) | ✔️ No fer res |
+| Diferents: local.hash!=servidor.hash && local.last_remote_hash == servidor.hash | ⬆️ Pujar partida local |
+| Diferents: hash diferent | ⚠ Conflicte |
 
 ### 3.3 Resolució de conflictes
 
-Quan una partida ha canviat a local i servidor:
-
-```
-save/
- ├─ save.dat
- ├─ save_LOCAL.dat
- ├─ save_SERVER.dat
-```
-
-No es sobreescriu mai informació.
+Si el last_remote_hash i el hash de la remota son diferents, han cambiat tant la local com la remota. Tenim conflicte:
+  ```
+  save/
+  ├─ save.dat
+  ├─ save_LOCAL.dat
+  ├─ save_SERVER.dat
+  ```
+  
+  No es sobreescriu mai informació.
 
 
 ---
