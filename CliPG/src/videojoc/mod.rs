@@ -50,15 +50,15 @@ impl Videojoc {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_file() {
-                let mut last_remote_hash = "".to_string();
+                let mut last_sync_hash = "".to_string();
                 for p in self.partides_guardades.iter() {
                     if p.path == path.to_str().unwrap().to_string() {
-                        last_remote_hash = p.hash.clone();
+                        last_sync_hash = p.hash.clone();
                         break;
                     }
                 }
                 self.partides_locals
-                    .push(PartidaGuardada::new(path.to_str().unwrap().to_string()).with_videojoc(self).with_last_remote_hash(last_remote_hash));
+                    .push(PartidaGuardada::new(path.to_str().unwrap().to_string()).with_videojoc(self).with_last_sync_hash(last_sync_hash));
             }
         }
     }
@@ -107,7 +107,7 @@ impl Videojoc {
                         // Iguals → no fer res
                         aux = format!("✔️ Partida OK: {}", local.nom.to_str().unwrap().to_string());
                         println!("{}", aux);
-                    } else if local.last_remote_hash != "" && local.last_remote_hash == remote.hash {
+                    } else if local.last_sync_hash != "" && local.last_sync_hash == remote.hash {
                         aux = format!("⬆️ Pujar partida local (nova versió): {}", local.nom.to_str().unwrap().to_string());
                         println!("{}", aux);
                         if !test_mode {
@@ -184,7 +184,7 @@ pub mod tests {
                 path: PathBuf::new(),
                 timestamp: 245528886,
                 hash: "02d47a22e09f46731a58dbe7cb299c0315c6760aec7557e8ca6e87090fc85dfd".to_string(),
-                last_remote_hash: "".to_string(),
+                last_sync_hash: "".to_string(),
             };
             let p2 = PartidaGuardada {
                 videojoc: "".to_string(),
@@ -192,7 +192,7 @@ pub mod tests {
                 path: PathBuf::new(),
                 timestamp: 0,
                 hash: "".to_string(),
-                last_remote_hash: "".to_string(),
+                last_sync_hash: "".to_string(),
             };
             let p3 = PartidaGuardada {
                 videojoc: "".to_string(),
@@ -200,7 +200,7 @@ pub mod tests {
                 path: PathBuf::new(),
                 timestamp: 0,
                 hash: "".to_string(),
-                last_remote_hash: "".to_string(),
+                last_sync_hash: "".to_string(),
             };
             let p4 = PartidaGuardada {
                 videojoc: "".to_string(),
@@ -208,7 +208,7 @@ pub mod tests {
                 path: PathBuf::new(),
                 timestamp: 0,
                 hash: "patata".to_string(),
-                last_remote_hash: "".to_string(),
+                last_sync_hash: "".to_string(),
             };
             v.push(p1);
             v.push(p2);
@@ -283,7 +283,7 @@ pub mod tests {
     fn test_sync() {
         // TODO: el constructor de un videojoc ha de acceptar un videojocConfig.
         // Desde aquest videojocConfig guardarse les partidesConfig
-        // Al fer un load_partides_locals s'ha de emplenar el camp last_remote_hash desde el partidesConfig
+        // Al fer un load_partides_locals s'ha de emplenar el camp last_sync_hash desde el partidesConfig
         // Despres de sincronitzar s'ha de actualitzar el partidesConfig (fer-ne un de nou)
         // despres de un sync_all s'ha de guardar la configuracio total agafant les partides_config dels videojocs
         let mut partides_guardades = Vec::new();

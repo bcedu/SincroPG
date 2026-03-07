@@ -42,7 +42,7 @@
 | `path`      | `String` | Ruta completa del fitxer local.                 |
 | `timestamp` | `u32`    | Última modificació (per comparar amb servidor). |
 | `hash`      | `String` | Hash de contingut per detectar canvis.          |
-| `last_remote_hash`      | `String` | Hash del últim contingut que tenim sincronitzat amb el servidor.          |
+| `last_sync_hash`      | `String` | Hash del últim contingut que tenim sincronitzat amb el servidor.          |
 
 #### Mètodes
 
@@ -239,23 +239,33 @@ Iniciar sincronització
 
 1. Llegir partides locals
 2. Llegir partides del servidor
-3. Comparar per ID, hash i last_remote_hash
+3. Comparar per ID, local.hash, remote.hash i last_sync_hash
 4. Decidir acció per sincornitzar
 5. Actualitzar el CliPgConfig guardat en local per tindre els ultims hash sincronitzatsde cada partida
 
-### 3.2 Casos possibles
+### 3.2 Algoritme de sincronització
 
-| Estat | Acció |
-|-----|------|
-| Només local | ⬆️ Pujar al servidor |
-| Només servidor | ⬇️ Descarregar |
-| Iguals (local.hash==servidor.hash) | ✔️ No fer res |
-| Diferents: local.hash!=servidor.hash && local.last_remote_hash == servidor.hash | ⬆️ Pujar partida local |
-| Diferents: hash diferent | ⚠ Conflicte |
+La sincronització es basa en una comparació de tres valors per cada partida:
+
+- `local_hash` — hash del fitxer local
+- `remote_hash` — hash del fitxer al servidor
+- `last_sync_hash` — hash de l’última versió sincronitzada
+
+Per cada partida present en `local ∪ remote` s'aplica l’algoritme següent:
+
+| Estat | Condició | Acció |
+|------|----------|------|
+| Iguals | `local_hash == remote_hash` | No fer res |
+| Modificat només al servidor | `local_hash == last_sync_hash && remote_hash != last_sync_hash` | Descarregar del servidor |
+| Modificat només en local | `remote_hash == last_sync_hash && local_hash != last_sync_hash` | Pujar al servidor |
+| Modificat en ambdós | `local_hash != last_sync_hash && remote_hash != last_sync_hash && local_hash != remote_hash` | Conflicte |
+| Només existeix localment (fitxer nou) | `local_exists && !remote_exists && last_sync_hash != local_hash` | Pujar al servidor |
+| Només existeix remotament (fitxer nou) | `!local_exists && remote_exists && last_sync_hash != remote_hash` | Descarregar del servidor |
+| Eliminat al servidor | `local_exists && !remote_exists && last_sync_hash == local_hash` | Eliminar local |
+| Eliminat en local | `!local_exists && remote_exists && last_sync_hash == remote_hash` | Eliminar al servidor |
 
 ### 3.3 Resolució de conflictes
-
-Si el last_remote_hash i el hash de la remota son diferents, han cambiat tant la local com la remota. Tenim conflicte:
+No es sobreescriu mai informació. Fem copies:
   ```
   save/
   ├─ save.dat
@@ -263,7 +273,6 @@ Si el last_remote_hash i el hash de la remota son diferents, han cambiat tant la
   ├─ save_SERVER.dat
   ```
   
-  No es sobreescriu mai informació.
 
 
 ---

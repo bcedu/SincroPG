@@ -14,7 +14,7 @@ pub struct PartidaGuardada {
     pub path: PathBuf,
     pub timestamp: u32,
     pub hash: String,
-    pub last_remote_hash: String,
+    pub last_sync_hash: String,
 }
 
 impl PartidaGuardada {
@@ -35,7 +35,7 @@ impl PartidaGuardada {
             hash: hash,
             path: full_path,
             timestamp: timestamp,
-            last_remote_hash: "".to_string(),
+            last_sync_hash: "".to_string(),
         }
     }
     pub fn from_partida_guardada(partida_guardada: &PartidaGuardada) -> Self {
@@ -45,15 +45,15 @@ impl PartidaGuardada {
             hash: partida_guardada.hash.clone(),
             path: PathBuf::from(partida_guardada.path.to_str().unwrap()),
             timestamp: partida_guardada.timestamp,
-            last_remote_hash: partida_guardada.last_remote_hash.clone(),
+            last_sync_hash: partida_guardada.last_sync_hash.clone(),
         }
     }
     pub fn with_hash(mut self, hash: String) -> Self {
         self.hash = hash;
         self
     }
-    pub fn with_last_remote_hash(mut self, last_remote_hash: String) -> Self {
-        self.last_remote_hash = last_remote_hash;
+    pub fn with_last_sync_hash(mut self, last_sync_hash: String) -> Self {
+        self.last_sync_hash = last_sync_hash;
         self
     }
     pub fn with_videojoc(mut self, videojoc: &Videojoc) -> Self {
