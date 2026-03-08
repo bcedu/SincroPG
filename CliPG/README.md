@@ -246,8 +246,6 @@ Iniciar sincronització
 
 ### 3.2 Algoritme de sincronització
 
-TODO: faltara pensar que passa si no guardo les partides que ja no hi ha remotes al config local. Ess per el last_sync_hash
-
 La sincronització es basa en una comparació de tres valors per cada partida:
 
 - `local_hash` — hash del fitxer local

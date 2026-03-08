@@ -224,10 +224,26 @@ pub mod tests {
                 timestamp: 0,
                 hash: "patata".to_string(),
             };
+            let p5 = PartidaGuardada {
+                videojoc: "".to_string(),
+                nom: OsString::from("save_remote_modified.txt"),
+                path: PathBuf::new(),
+                timestamp: 0,
+                hash: "nou_hash".to_string(),
+            };
+            let p6 = PartidaGuardada {
+                videojoc: "".to_string(),
+                nom: OsString::from("save_deleted_local.txt"),
+                path: PathBuf::new(),
+                timestamp: 0,
+                hash: "xyz".to_string(),
+            };
             v.push(p1);
             v.push(p2);
             v.push(p3);
             v.push(p4);
+            v.push(p5);
+            v.push(p6);
             v
         }
         fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
@@ -277,7 +293,9 @@ pub mod tests {
         let mut v = get_videojoc_w40k();
         assert_eq!(v.partides_locals.len(), 0);
         v.load_partides_locals();
-        assert_eq!(v.partides_locals.len(), 4);
+        assert_eq!(v.partides_locals.len(), 6);
+        assert_eq!(v.partides_locals[5].nom, "save_remote_modified.txt");
+        assert_eq!(v.partides_locals[4].nom, "save_deleted_remote.txt");
         assert_eq!(v.partides_locals[3].nom, "save3.txt");
         assert_eq!(v.partides_locals[2].nom, "save1.txt");
         assert_eq!(v.partides_locals[1].nom, "save4.txt");
@@ -288,27 +306,11 @@ pub mod tests {
         let mut v = get_videojoc_w40k();
         let s = get_fake_api();
         v.fetch_partides_remotes(&s);
-        assert_eq!(v.partides_remotes.len(), 4);
+        assert_eq!(v.partides_remotes.len(), 6);
         assert_eq!(v.partides_remotes[0].nom, "save1.txt");
         assert_eq!(v.partides_remotes[1].nom, "save_test_2");
         assert_eq!(v.partides_remotes[2].nom, "save3.txt");
         assert_eq!(v.partides_remotes[3].nom, "save4.txt");
-    }
-    #[test]
-    fn test_sync() {
-        let mut partides_guardades = Vec::new();
-        partides_guardades.push(PartidaGuardadaConfig {
-            path: format!("{}save4.txt", get_videojoc_path_w40k()),
-            hash: "patata".to_string(),
-        });
-        let mut v = get_videojoc_w40k().with_partides_guardades_list(&partides_guardades);
-        let resultat = v.sync(&get_fake_api(), true);
-        let resultat_esperat = "✔️ Partida OK: save1.txt
-⬆️ Pujar partida local: save2.txt
-⚠️ Conflicte: save3.txt
-⬆️ Pujar partida local (local modificat): save4.txt
-⬇️ Descarregar partida remota: save_test_2\n";
-        assert_eq!(resultat_esperat, resultat);
     }
     #[test]
     fn test_resoldre_conflicte() {
@@ -347,5 +349,41 @@ pub mod tests {
         }
         assert_eq!(nfitxers_despres, 2);
         local.write_file_sync(contingut_original.as_str());
+    }
+    #[test]
+    fn test_sync() {
+        let mut partides_guardades = Vec::new();
+        // remot eliminat
+        partides_guardades.push(PartidaGuardadaConfig {
+            path: format!("{}save_deleted_remote.txt", get_videojoc_path_w40k()),
+            hash: "dd4857f6cd556600cb629caf0acdcd94666543dfdb1d1001cac26b7f12e9b6ca".to_string(),
+        });
+        // local eliminat
+        partides_guardades.push(PartidaGuardadaConfig {
+            path: format!("{}save_deleted_local.txt", get_videojoc_path_w40k()),
+            hash: "xyz".to_string(),
+        });
+        // remot modificat
+        partides_guardades.push(PartidaGuardadaConfig {
+            path: format!("{}save_remote_modified.txt", get_videojoc_path_w40k()),
+            hash: "c0badec7d321935a94a42b9601512ebf655c64a577dd7711255fac1b112ac795".to_string(),
+        });
+        // local modificat
+        partides_guardades.push(PartidaGuardadaConfig {
+            path: format!("{}save4.txt", get_videojoc_path_w40k()),
+            hash: "patata".to_string(),
+        });
+        let mut v = get_videojoc_w40k().with_partides_guardades_list(&partides_guardades);
+        let resultat = v.sync(&get_fake_api(), true);
+        let resultat_esperat = "✔️ Partida OK: save1.txt
+⬆️ Pujar partida local: save2.txt
+⚠️ Conflicte: save3.txt
+⬆️ Pujar partida local (local modificat): save4.txt
+❌ Eliminar remot: save_deleted_local.txt
+❌ Eliminar local: save_deleted_remote.txt
+⬇️ Descarregar (remot modificat): save_remote_modified.txt
+⬇️ Descarregar partida remota: save_test_2
+";
+        assert_eq!(resultat_esperat, resultat);
     }
 }
