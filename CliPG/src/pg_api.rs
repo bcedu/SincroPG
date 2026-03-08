@@ -270,11 +270,14 @@ pub mod tests {
         let nom_videojoc = "Napoleón TW HD";
         let server = setup_fake_server_get_partides_guardades(nom_videojoc.to_string());
         let pgapi = get_pg_api(server.url().clone());
-        let videojocs = pgapi.get_partides_guardades(&Videojoc::new(nom_videojoc.to_string()));
+        let fake_path = format!("patata/{}", nom_videojoc);
+        let fake_path_save_1 = format!("patata/{}/save1.txt", nom_videojoc);
+        let videojocs = pgapi.get_partides_guardades(&Videojoc::new(fake_path));
         assert_eq!(videojocs.len(), 3);
         assert_eq!(videojocs.get(0).unwrap().nom.to_str().unwrap().to_string(), "save1.txt".to_string());
         assert_eq!(videojocs.get(0).unwrap().hash.to_string(), "patata".to_string());
         assert_eq!(videojocs.get(0).unwrap().videojoc.to_string(), nom_videojoc.to_string());
+        assert_eq!(videojocs.get(0).unwrap().path.as_os_str().to_string_lossy().to_string(), fake_path_save_1);
         assert_eq!(videojocs.get(1).unwrap().nom.to_str().unwrap().to_string(), "save".to_string());
         assert_eq!(videojocs.get(1).unwrap().hash.to_string(), "pastanaga".to_string());
         assert_eq!(videojocs.get(1).unwrap().videojoc.to_string(), nom_videojoc.to_string());
