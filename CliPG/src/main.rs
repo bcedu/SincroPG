@@ -3,6 +3,10 @@ use clap::{Arg, Command};
 
 fn main() {
     /*
+    let mut clipg = CliPG::default();
+    let res = clipg.sync_all(false);
+    */
+    /*
     let options = eframe::NativeOptions::default();
     eframe::run_native(
         "CliPG",

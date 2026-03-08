@@ -63,7 +63,7 @@ impl Videojoc {
     }
     pub fn fetch_partides_remotes<A: PartidesGuardadesAPI>(&mut self, api: &A) {
         self.partides_remotes.clear();
-        for partida_remota in api.get_partides_guardades(self.nom.to_str().unwrap().to_string()) {
+        for partida_remota in api.get_partides_guardades(&self) {
             self.partides_remotes.push(partida_remota)
         }
     }
@@ -194,7 +194,7 @@ pub mod tests {
         fn get_videojocs(&self) -> Vec<String> {
             Vec::new()
         }
-        fn get_partides_guardades(&self, _: String) -> Vec<PartidaGuardada> {
+        fn get_partides_guardades(&self, _: &Videojoc) -> Vec<PartidaGuardada> {
             let mut v = Vec::new();
             let p1 = PartidaGuardada {
                 videojoc: "".to_string(),

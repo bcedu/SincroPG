@@ -75,6 +75,7 @@ impl PartidaGuardada {
         fs::remove_file(&self.path).unwrap();
     }
     pub fn write_file_sync(&self, content: &str) {
+        let aux = self.path.as_path();
         let mut f = fs::File::create(self.path.as_path()).unwrap();
         f.write_all(content.as_bytes()).unwrap();
         f.sync_all().unwrap();

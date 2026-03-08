@@ -11,7 +11,7 @@ pub trait PartidesGuardadesAPI {
     // GET /api/v1/test
     fn get_videojocs(&self) -> Vec<String>;
     // GET /api/v1/videojocs
-    fn get_partides_guardades(&self, nom_videojoc: String) -> Vec<PartidaGuardada>;
+    fn get_partides_guardades(&self, videojoc: &Videojoc) -> Vec<PartidaGuardada>;
     // GET /api/v1/videojocs/{videojoc_id}/partides
     fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada);
     // POST /api/v1/videojocs/{videojoc_id}/partides
@@ -110,15 +110,17 @@ impl PartidesGuardadesAPI for PgAPI {
         }
         videojocs
     }
-    fn get_partides_guardades(&self, nom_videojoc: String) -> Vec<PartidaGuardada> {
+    fn get_partides_guardades(&self, videojoc: &Videojoc) -> Vec<PartidaGuardada> {
         // GET /api/v1/videojocs/{videojoc_id}/partides
-        let v = Videojoc::new(nom_videojoc.clone());
+        let v = Videojoc::from(videojoc);
+        let nom_videojoc = v.nom.to_string_lossy().to_string();
         let mut partides = Vec::new();
         let request_url = format!("videojocs/{nom_videojoc}/partides");
         let response = self.make_get_request(request_url.as_str());
         let partides_server: Vec<PartidaGuardadaAPI> = response.json().unwrap();
         for p in partides_server {
-            let pg = PartidaGuardada::new(p.nom).with_hash(p.hash).with_videojoc(&v);
+            let path = format!("{}/{}", v.local_folder.to_str().unwrap().to_string(), p.nom);
+            let pg = PartidaGuardada::new(path).with_hash(p.hash).with_videojoc(&v);
             partides.push(pg);
         }
         partides
@@ -155,6 +157,7 @@ impl PartidesGuardadesAPI for PgAPI {
 #[cfg(test)]
 pub mod tests {
     use crate::pg_api::{PartidesGuardadesAPI, PgAPI};
+    use crate::videojoc::Videojoc;
     use crate::videojoc::partida_guardada::PartidaGuardada;
     use eframe::egui::TextBuffer;
     use mockito::{Mock, Server};
@@ -267,7 +270,7 @@ pub mod tests {
         let nom_videojoc = "Napoleón TW HD";
         let server = setup_fake_server_get_partides_guardades(nom_videojoc.to_string());
         let pgapi = get_pg_api(server.url().clone());
-        let videojocs = pgapi.get_partides_guardades(nom_videojoc.to_string());
+        let videojocs = pgapi.get_partides_guardades(&Videojoc::new(nom_videojoc.to_string()));
         assert_eq!(videojocs.len(), 3);
         assert_eq!(videojocs.get(0).unwrap().nom.to_str().unwrap().to_string(), "save1.txt".to_string());
         assert_eq!(videojocs.get(0).unwrap().hash.to_string(), "patata".to_string());
