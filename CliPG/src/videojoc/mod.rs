@@ -68,88 +68,77 @@ impl Videojoc {
         }
     }
     pub fn sync<A: PartidesGuardadesAPI>(&mut self, api: &A, test_mode: bool) -> String {
-        // Assegurem dades actualitzades
         self.load_partides_locals();
         self.fetch_partides_remotes(api);
-        // Indexem per nom
-        let locals: HashMap<String, &PartidaGuardada> = self.partides_locals.iter().map(|p| (p.nom.to_str().unwrap().to_string(), p)).collect();
-        let remotes: HashMap<String, &PartidaGuardada> = self.partides_remotes.iter().map(|p| (p.nom.to_str().unwrap().to_string(), p)).collect();
-        let guardades: HashMap<String, &PartidaGuardadaConfig> = self
+        let locals: HashMap<_, _> = self.partides_locals.iter().map(|p| (p.nom.to_str().unwrap().to_string(), p)).collect();
+        let remotes: HashMap<_, _> = self.partides_remotes.iter().map(|p| (p.nom.to_str().unwrap().to_string(), p)).collect();
+        let guardades: HashMap<_, _> = self
             .partides_guardades
             .iter()
-            .map(|(k, v)| (PathBuf::from(k.clone()).file_name().unwrap().to_str().unwrap().to_string(), v))
+            .map(|(k, v)| (PathBuf::from(k).file_name().unwrap().to_str().unwrap().to_string(), v))
             .collect();
-        // Unió de totes les partides
-        let mut noms: Vec<String> = locals.keys().chain(remotes.keys()).cloned().collect();
+        let mut noms: Vec<_> = locals.keys().chain(remotes.keys()).cloned().collect();
         noms.sort();
         noms.dedup();
         let mut resultat = String::new();
         for nom in noms {
-            let aux;
-            let last_sync_hash = guardades.get(&nom).map_or(String::new(), |p| p.hash.clone());
-            match (locals.get(&nom), remotes.get(&nom)) {
-                // -------- NOMÉS LOCAL --------
+            let local = locals.get(&nom);
+            let remote = remotes.get(&nom);
+            let last_sync_hash = guardades.get(&nom).map(|p| p.hash.as_str()).unwrap_or("");
+            let msg = match (local, remote) {
+                // només local
                 (Some(local), None) => {
                     if last_sync_hash == local.hash {
-                        aux = format!("❌ Eliminar local: {}", nom);
-                        println!("{}", aux);
                         if !test_mode {
                             local.eliminar_partida_guardada();
                         }
+                        format!("❌ Eliminar local: {}", nom)
                     } else {
-                        aux = format!("⬆️ Pujar partida local: {}", nom);
-                        println!("{}", aux);
                         if !test_mode {
                             local.pujar_partida_guardada(api);
                         }
+                        format!("⬆️ Pujar partida local: {}", nom)
                     }
                 }
-                // -------- NOMÉS REMOT --------
+                // només remot
                 (None, Some(remote)) => {
                     if last_sync_hash == remote.hash {
-                        aux = format!("❌ Eliminar remot: {}", nom);
-                        println!("{}", aux);
                         if !test_mode {
                             api.delete_partida_guardada(&remote);
                         }
+                        format!("❌ Eliminar remot: {}", nom)
                     } else {
-                        aux = format!("⬇️ Descarregar partida remota: {}", nom);
-                        println!("{}", aux);
                         if !test_mode {
                             remote.descarregar_partida_guardada(api);
                         }
+                        format!("⬇️ Descarregar partida remota: {}", nom)
                     }
                 }
-                // -------- EXISTEIXEN TOTS DOS --------
+                // existeixen tots dos
                 (Some(local), Some(remote)) => {
                     if local.hash == remote.hash {
-                        aux = format!("✔️ Partida OK: {}", nom);
-                        println!("{}", aux);
+                        format!("✔️ Partida OK: {}", nom)
                     } else if local.hash == last_sync_hash {
-                        aux = format!("⬇️ Descarregar (remot modificat): {}", nom);
-                        println!("{}", aux);
                         if !test_mode {
                             remote.descarregar_partida_guardada(api);
                         }
+                        format!("⬇️ Descarregar (remot modificat): {}", nom)
                     } else if remote.hash == last_sync_hash {
-                        aux = format!("⬆️ Pujar partida local (local modificat): {}", nom);
-                        println!("{}", aux);
                         if !test_mode {
                             local.pujar_partida_guardada(api);
                         }
+                        format!("⬆️ Pujar partida local (local modificat): {}", nom)
                     } else {
-                        aux = format!("⚠️ Conflicte: {}", nom);
-                        println!("{}", aux);
                         if !test_mode {
                             self.resoldre_conflicte(local, remote, api);
                         }
+                        format!("⚠️ Conflicte: {}", nom)
                     }
                 }
-                (None, None) => {
-                    aux = String::new();
-                }
-            }
-            resultat.push_str(aux.as_str());
+                _ => continue,
+            };
+            println!("{}", msg);
+            resultat.push_str(&msg);
             resultat.push('\n');
         }
         self.actualitzar_partides_guardades();
