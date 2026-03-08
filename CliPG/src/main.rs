@@ -38,7 +38,20 @@ fn main() {
                 .num_args(1)
                 .value_name("videojoc_id"),
         )
-        .arg(Arg::new("sync_all").short('s').long("sync_all").help("Sincronitza tots els videojocs").action(clap::ArgAction::SetTrue))
+        .arg(
+            Arg::new("sync_all")
+                .short('s')
+                .long("sync_all")
+                .help("Sincronitza tots els videojocs habilitats")
+                .action(clap::ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new("sync_all_test")
+                .short('t')
+                .long("sync_all_test")
+                .help("Sincronitza tots els videojocs habilitats (test mode)")
+                .action(clap::ArgAction::SetTrue),
+        )
         .get_matches();
 
     let mut clipg = CliPG::default();
@@ -57,7 +70,12 @@ fn main() {
     }
     if matches.get_flag("sync_all") {
         println!("Sincronitzant tots els videojocs...");
-        let res = clipg.sync_all();
+        let res = clipg.sync_all(false);
+        println!("{res}");
+    }
+    if matches.get_flag("sync_all_test") {
+        println!("Sincronitzant tots els videojocs (test mode)...");
+        let res = clipg.sync_all(true);
         println!("{res}");
     }
 }

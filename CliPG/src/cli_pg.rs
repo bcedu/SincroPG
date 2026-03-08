@@ -149,12 +149,12 @@ impl CliPG {
         }
         error_jocs
     }
-    pub fn sync_joc(&self, joc: &Videojoc) -> String {
+    pub fn sync_joc(&self, joc: &Videojoc, test_mode: bool) -> String {
         let mut joc_m = Videojoc::from(joc);
-        let joc_res = joc_m.sync(&self.api, false);
+        let joc_res = joc_m.sync(&self.api, test_mode);
         format!("* {}:\n{joc_res}", joc.nom.clone().to_str().unwrap())
     }
-    pub fn sync_all(&mut self) -> String {
+    pub fn sync_all(&mut self, test_mode: bool) -> String {
         let res = "";
         let mut new_config = CliPgConfig {
             server: self.config.server.clone(),
@@ -162,7 +162,7 @@ impl CliPG {
         };
         self.load_local_jocs();
         for v in self.vjocs.iter() {
-            let joc_res = self.sync_joc(v);
+            let joc_res = self.sync_joc(v, test_mode);
             let res = format!("{}\n{}", res, joc_res);
             new_config.videojocs_habilitats.list.push(VideojocConfig {
                 nom: v.nom.to_str().unwrap().to_string().clone(),
