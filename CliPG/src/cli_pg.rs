@@ -137,7 +137,8 @@ impl CliPG {
         for v in self.config.videojocs_habilitats.list.iter() {
             let path = PathBuf::from(&v.path);
             if path.exists() {
-                self.vjocs.push(Videojoc::new(v.path.clone()).with_nom(v.nom.clone()))
+                self.vjocs
+                    .push(Videojoc::new(v.path.clone()).with_nom(v.nom.clone()).with_partides_guardades_list(&v.partides_guardades))
             } else {
                 error_jocs.push(VideojocConfig {
                     nom: v.nom.clone(),
@@ -166,7 +167,7 @@ impl CliPG {
             new_config.videojocs_habilitats.list.push(VideojocConfig {
                 nom: v.nom.to_str().unwrap().to_string().clone(),
                 path: v.local_folder.to_str().unwrap().to_string().clone(),
-                partides_guardades: v.partides_guardades.clone(),
+                partides_guardades: v.get_partides_guardades_list(),
             });
         }
         Self::save_config(&new_config, Some(PathBuf::from(self.config_path.clone())));

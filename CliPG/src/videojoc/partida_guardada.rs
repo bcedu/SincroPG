@@ -14,7 +14,6 @@ pub struct PartidaGuardada {
     pub path: PathBuf,
     pub timestamp: u32,
     pub hash: String,
-    pub last_sync_hash: String,
 }
 
 impl PartidaGuardada {
@@ -35,7 +34,6 @@ impl PartidaGuardada {
             hash: hash,
             path: full_path,
             timestamp: timestamp,
-            last_sync_hash: "".to_string(),
         }
     }
     pub fn from_partida_guardada(partida_guardada: &PartidaGuardada) -> Self {
@@ -45,15 +43,10 @@ impl PartidaGuardada {
             hash: partida_guardada.hash.clone(),
             path: PathBuf::from(partida_guardada.path.to_str().unwrap()),
             timestamp: partida_guardada.timestamp,
-            last_sync_hash: partida_guardada.last_sync_hash.clone(),
         }
     }
     pub fn with_hash(mut self, hash: String) -> Self {
         self.hash = hash;
-        self
-    }
-    pub fn with_last_sync_hash(mut self, last_sync_hash: String) -> Self {
-        self.last_sync_hash = last_sync_hash;
         self
     }
     pub fn with_videojoc(mut self, videojoc: &Videojoc) -> Self {
@@ -77,6 +70,9 @@ impl PartidaGuardada {
         let dir = self.path.parent().unwrap();
         let nou_path = dir.join(nou_nom);
         fs::copy(&self.path, &nou_path).unwrap();
+    }
+    pub fn eliminar_partida_guardada(&self) {
+        fs::remove_file(&self.path).unwrap();
     }
     pub fn write_file_sync(&self, content: &str) {
         let mut f = fs::File::create(self.path.as_path()).unwrap();

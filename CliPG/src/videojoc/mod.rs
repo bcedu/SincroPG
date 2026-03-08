@@ -14,7 +14,7 @@ pub struct Videojoc {
     pub local_folder: PathBuf,
     pub partides_locals: Vec<PartidaGuardada>,
     pub partides_remotes: Vec<PartidaGuardada>,
-    pub partides_guardades: Vec<PartidaGuardadaConfig>,
+    pub partides_guardades: HashMap<String, PartidaGuardadaConfig>,
 }
 
 impl Videojoc {
@@ -26,7 +26,7 @@ impl Videojoc {
             local_folder,
             partides_locals: Vec::new(),
             partides_remotes: Vec::new(),
-            partides_guardades: Vec::new(),
+            partides_guardades: HashMap::new(),
         }
     }
     pub fn from(videojoc: &Videojoc) -> Self {
@@ -36,8 +36,15 @@ impl Videojoc {
         self.nom = OsString::from(nom);
         self
     }
-    pub fn with_partides_guardades(mut self, partides_guardades: Vec<PartidaGuardadaConfig>) -> Self {
+    pub fn with_partides_guardades(mut self, partides_guardades: HashMap<String, PartidaGuardadaConfig>) -> Self {
         self.partides_guardades = partides_guardades;
+        self
+    }
+    pub fn with_partides_guardades_list(mut self, partides_guardades: &Vec<PartidaGuardadaConfig>) -> Self {
+        self.partides_guardades.clear();
+        for p in partides_guardades.iter() {
+            self.partides_guardades.insert(p.path.clone(), p.clone());
+        }
         self
     }
     pub fn load_partides_locals(&mut self) {
@@ -50,15 +57,7 @@ impl Videojoc {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_file() {
-                let mut last_sync_hash = "".to_string();
-                for p in self.partides_guardades.iter() {
-                    if p.path == path.to_str().unwrap().to_string() {
-                        last_sync_hash = p.hash.clone();
-                        break;
-                    }
-                }
-                self.partides_locals
-                    .push(PartidaGuardada::new(path.to_str().unwrap().to_string()).with_videojoc(self).with_last_sync_hash(last_sync_hash));
+                self.partides_locals.push(PartidaGuardada::new(path.to_str().unwrap().to_string()).with_videojoc(self));
             }
         }
     }
@@ -75,54 +74,77 @@ impl Videojoc {
         // Indexem per nom
         let locals: HashMap<String, &PartidaGuardada> = self.partides_locals.iter().map(|p| (p.nom.to_str().unwrap().to_string(), p)).collect();
         let remotes: HashMap<String, &PartidaGuardada> = self.partides_remotes.iter().map(|p| (p.nom.to_str().unwrap().to_string(), p)).collect();
+        let guardades: HashMap<String, &PartidaGuardadaConfig> = self
+            .partides_guardades
+            .iter()
+            .map(|(k, v)| (PathBuf::from(k.clone()).file_name().unwrap().to_str().unwrap().to_string(), v))
+            .collect();
         // Unió de totes les partides
         let mut noms: Vec<String> = locals.keys().chain(remotes.keys()).cloned().collect();
-        // Eliminem duplicats
         noms.sort();
         noms.dedup();
-        // Revisem cada partida guardada i fem la sincronitzacio
         let mut resultat = String::new();
         for nom in noms {
             let aux;
+            let last_sync_hash = guardades.get(&nom).map_or(String::new(), |p| p.hash.clone());
             match (locals.get(&nom), remotes.get(&nom)) {
-                // ⬆️ Només local
+                // -------- NOMÉS LOCAL --------
                 (Some(local), None) => {
-                    aux = format!("⬆️ Pujar partida local (nova partida): {}", local.nom.to_str().unwrap().to_string());
-                    println!("{}", aux);
-                    if !test_mode {
-                        local.pujar_partida_guardada(api);
+                    if last_sync_hash == local.hash {
+                        aux = format!("❌ Eliminar local: {}", nom);
+                        println!("{}", aux);
+                        if !test_mode {
+                            local.eliminar_partida_guardada();
+                        }
+                    } else {
+                        aux = format!("⬆️ Pujar partida local: {}", nom);
+                        println!("{}", aux);
+                        if !test_mode {
+                            local.pujar_partida_guardada(api);
+                        }
                     }
                 }
-                // ⬇️ Només servidor
+                // -------- NOMÉS REMOT --------
                 (None, Some(remote)) => {
-                    aux = format!("⬇️ Descarregar partida remota: {}", remote.nom.to_str().unwrap().to_string());
-                    println!("{}", aux);
-                    if !test_mode {
-                        remote.descarregar_partida_guardada(api);
+                    if last_sync_hash == remote.hash {
+                        aux = format!("❌ Eliminar remot: {}", nom);
+                        println!("{}", aux);
+                        if !test_mode {
+                            api.delete_partida_guardada(&remote);
+                        }
+                    } else {
+                        aux = format!("⬇️ Descarregar partida remota: {}", nom);
+                        println!("{}", aux);
+                        if !test_mode {
+                            remote.descarregar_partida_guardada(api);
+                        }
                     }
                 }
-                // ✔️ Existeixen les dues
+                // -------- EXISTEIXEN TOTS DOS --------
                 (Some(local), Some(remote)) => {
                     if local.hash == remote.hash {
-                        // Iguals → no fer res
-                        aux = format!("✔️ Partida OK: {}", local.nom.to_str().unwrap().to_string());
+                        aux = format!("✔️ Partida OK: {}", nom);
                         println!("{}", aux);
-                    } else if local.last_sync_hash != "" && local.last_sync_hash == remote.hash {
-                        aux = format!("⬆️ Pujar partida local (nova versió): {}", local.nom.to_str().unwrap().to_string());
+                    } else if local.hash == last_sync_hash {
+                        aux = format!("⬇️ Descarregar (remot modificat): {}", nom);
+                        println!("{}", aux);
+                        if !test_mode {
+                            remote.descarregar_partida_guardada(api);
+                        }
+                    } else if remote.hash == last_sync_hash {
+                        aux = format!("⬆️ Pujar partida local (local modificat): {}", nom);
                         println!("{}", aux);
                         if !test_mode {
                             local.pujar_partida_guardada(api);
                         }
                     } else {
-                        // Diferents → conflicte
-                        aux = format!("⚠️ Conflicte: {}", local.nom.to_str().unwrap().to_string());
+                        aux = format!("⚠️ Conflicte: {}", nom);
                         println!("{}", aux);
                         if !test_mode {
                             self.resoldre_conflicte(local, remote, api);
                         }
                     }
                 }
-                // Cas impossible
                 (None, None) => {
                     aux = String::new();
                 }
@@ -136,12 +158,16 @@ impl Videojoc {
     pub fn actualitzar_partides_guardades(&mut self) {
         // Actualitzem les partides que han quedat al local per obtenir els seus hash i actualitzar el partides_guardades
         self.load_partides_locals();
-        self.partides_guardades = Vec::new();
+        self.partides_guardades = HashMap::new();
         for partida in &self.partides_locals {
-            self.partides_guardades.push(PartidaGuardadaConfig {
-                path: partida.path.to_str().unwrap().to_string().clone(),
-                hash: partida.hash.clone(),
-            });
+            let key = partida.path.to_str().unwrap().to_string();
+            self.partides_guardades.insert(
+                key.clone(),
+                PartidaGuardadaConfig {
+                    path: key,
+                    hash: partida.hash.clone(),
+                },
+            );
         }
     }
     pub fn resoldre_conflicte<A: PartidesGuardadesAPI>(&self, local: &PartidaGuardada, remot: &PartidaGuardada, api: &A) {
@@ -161,6 +187,9 @@ impl Videojoc {
             // Descarreguem la remota per actualitzar la original
             remot.descarregar_partida_guardada(api);
         }
+    }
+    pub fn get_partides_guardades_list(&self) -> Vec<PartidaGuardadaConfig> {
+        self.partides_guardades.values().cloned().collect()
     }
 }
 
@@ -184,23 +213,20 @@ pub mod tests {
                 path: PathBuf::new(),
                 timestamp: 245528886,
                 hash: "02d47a22e09f46731a58dbe7cb299c0315c6760aec7557e8ca6e87090fc85dfd".to_string(),
-                last_sync_hash: "".to_string(),
             };
             let p2 = PartidaGuardada {
                 videojoc: "".to_string(),
                 nom: OsString::from("save_test_2"),
                 path: PathBuf::new(),
                 timestamp: 0,
-                hash: "".to_string(),
-                last_sync_hash: "".to_string(),
+                hash: "1".to_string(),
             };
             let p3 = PartidaGuardada {
                 videojoc: "".to_string(),
                 nom: OsString::from("save3.txt"),
                 path: PathBuf::new(),
                 timestamp: 0,
-                hash: "".to_string(),
-                last_sync_hash: "".to_string(),
+                hash: "2".to_string(),
             };
             let p4 = PartidaGuardada {
                 videojoc: "".to_string(),
@@ -208,7 +234,6 @@ pub mod tests {
                 path: PathBuf::new(),
                 timestamp: 0,
                 hash: "patata".to_string(),
-                last_sync_hash: "".to_string(),
             };
             v.push(p1);
             v.push(p2);
@@ -217,6 +242,7 @@ pub mod tests {
             v
         }
         fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
             if partida_guardada.nom == "save_remot.txt" {
                 "Pastanaga Bullida\nPartida remota\n@#áçñÑ%".to_string()
@@ -281,22 +307,17 @@ pub mod tests {
     }
     #[test]
     fn test_sync() {
-        // TODO: el constructor de un videojoc ha de acceptar un videojocConfig.
-        // Desde aquest videojocConfig guardarse les partidesConfig
-        // Al fer un load_partides_locals s'ha de emplenar el camp last_sync_hash desde el partidesConfig
-        // Despres de sincronitzar s'ha de actualitzar el partidesConfig (fer-ne un de nou)
-        // despres de un sync_all s'ha de guardar la configuracio total agafant les partides_config dels videojocs
         let mut partides_guardades = Vec::new();
         partides_guardades.push(PartidaGuardadaConfig {
             path: format!("{}save4.txt", get_videojoc_path_w40k()),
             hash: "patata".to_string(),
         });
-        let mut v = get_videojoc_w40k().with_partides_guardades(partides_guardades);
+        let mut v = get_videojoc_w40k().with_partides_guardades_list(&partides_guardades);
         let resultat = v.sync(&get_fake_api(), true);
         let resultat_esperat = "✔️ Partida OK: save1.txt
-⬆️ Pujar partida local (nova partida): save2.txt
+⬆️ Pujar partida local: save2.txt
 ⚠️ Conflicte: save3.txt
-⬆️ Pujar partida local (nova versió): save4.txt
+⬆️ Pujar partida local (local modificat): save4.txt
 ⬇️ Descarregar partida remota: save_test_2\n";
         assert_eq!(resultat_esperat, resultat);
     }

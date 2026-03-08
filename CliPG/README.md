@@ -54,7 +54,7 @@
 | ✅     | `pujar_partida_guardada(api: PgAPI)`                             | `()`                | Puja la partida guardada al servidor.                       |
 | ✅     | `descarregar_partida_guardada(api: PgAPI)`                       | `()`                | Es descarrega la partida guardada del servidor i la guarda. |
 | ✅ | `duplicar_fitxer(nou_nom: String)`                                  | `()`                | Duplica el fitxer de la partida local amb el nou nom.       |
-
+| ✅     | `eliminar_partida_guardada()`                                     | `()`                | Elimina el fitxer de la partida guardada.                  
 ---
 
 ### PgAPI (struct)
@@ -79,6 +79,7 @@
 | ✅ | `get_partides_guardades(nom_videojoc: String) -> Vec<PartidaGuardada>` | `Vec<PartidaGuardada>` | Obté les partides guardades del servidor per el videojoc que es digui `videojoc`. |
 | ✅ | `post_partida_guardada(partida_guardada: &PartidaGuardada)`            | `()`                   | Puja la partida guardada al servidor.                                             |
 | ✅ | `get_partida_guardada(partida_guardada: &PartidaGuardada) -> String`   | `String`               | Retorna el contingut del fitxer de la partida guardada que hi ha al servidor.     |
+| ✅ | `delete_partida_guardada(partida_guardada: &PartidaGuardada)`          | `()`                   | Elimina la partida guardada del servidor.                                          |
 
 #### Structs que representen respostes de la API:
 
@@ -244,6 +245,8 @@ Iniciar sincronització
 5. Actualitzar el CliPgConfig guardat en local per tindre els ultims hash sincronitzatsde cada partida
 
 ### 3.2 Algoritme de sincronització
+
+TODO: faltara pensar que passa si no guardo les partides que ja no hi ha remotes al config local. Ess per el last_sync_hash
 
 La sincronització es basa en una comparació de tres valors per cada partida:
 

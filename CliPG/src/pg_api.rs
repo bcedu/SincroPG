@@ -17,6 +17,8 @@ pub trait PartidesGuardadesAPI {
     // POST /api/v1/videojocs/{videojoc_id}/partides
     fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String;
     // GET /api/v1/videojocs/{videojoc_id}/partides/{partida_id}/contingut
+    fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada);
+    // DELETE /api/v1/videojocs/{videojoc_id}/partides/{partida_id}
 }
 
 pub struct PgAPI {
@@ -45,6 +47,7 @@ struct PartidaGuardadaContingutAPI {
 enum RTYPE {
     GET,
     POST,
+    DELETE,
 }
 
 impl PgAPI {
@@ -61,6 +64,9 @@ impl PgAPI {
     }
     fn make_post_request(&self, endpoint: &str, body: PartidaGuardadaContingutAPI) -> reqwest::blocking::Response {
         self.make_request(RTYPE::POST, endpoint, Some(body))
+    }
+    fn make_delete_request(&self, endpoint: &str) -> reqwest::blocking::Response {
+        self.make_request(RTYPE::DELETE, endpoint, None)
     }
     fn make_request(&self, rtype: RTYPE, endpoint: &str, body: Option<PartidaGuardadaContingutAPI>) -> reqwest::blocking::Response {
         let mut request_url = format!("{url}/api/v1", url = self.url.clone());
@@ -81,6 +87,9 @@ impl PgAPI {
                     response = self.client.post(request_url).basic_auth(self.usuari.clone(), Some(self.contrassenya.clone())).send();
                 }
             },
+            RTYPE::DELETE => {
+                response = self.client.delete(request_url).basic_auth(self.usuari.clone(), Some(self.contrassenya.clone())).send();
+            }
         }
         response.unwrap()
     }
@@ -135,6 +144,11 @@ impl PartidesGuardadesAPI for PgAPI {
         let request_url = format!("videojocs/{}/partides/{}/contingut", partida_guardada.videojoc, partida_guardada.nom.to_str().unwrap());
         let pg: PartidaGuardadaContingutAPI = self.make_get_request(request_url.as_str()).json().unwrap();
         pg.contingut
+    }
+    fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {
+        // DELETE /api/v1/videojocs/{videojoc_id}/partides/{partida_id}
+        let request_url = format!("videojocs/{}/partides/{}", partida_guardada.videojoc, partida_guardada.nom.to_str().unwrap());
+        self.make_delete_request(request_url.as_str());
     }
 }
 
