@@ -58,7 +58,7 @@ fn main() {
         )
         .get_matches();
 
-    let mut clipg = CliPG::default();
+    let mut clipg = CliPG::default(None);
     if matches.get_flag("list") {
         for v in clipg.config.videojocs_habilitats.list.iter() {
             println!("* {}\n    -> {}\n", v.nom, v.path);

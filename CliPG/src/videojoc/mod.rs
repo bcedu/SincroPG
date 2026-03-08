@@ -1,5 +1,4 @@
 pub mod partida_guardada;
-
 use crate::cli_pg::PartidaGuardadaConfig;
 use crate::pg_api::{PartidesGuardadesAPI, PgAPI};
 use chrono::Local;
@@ -16,7 +15,6 @@ pub struct Videojoc {
     pub partides_remotes: Vec<PartidaGuardada>,
     pub partides_guardades: HashMap<String, PartidaGuardadaConfig>,
 }
-
 impl Videojoc {
     pub fn new(path: String) -> Self {
         let local_folder = PathBuf::from(path.clone());

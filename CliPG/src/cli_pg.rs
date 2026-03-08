@@ -1,14 +1,15 @@
 use crate::pg_api::*;
 use crate::videojoc::*;
-use clap::builder::Str;
 use directories::ProjectDirs;
 use eframe::egui;
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::fs::File;
+use std::io::{Read, Write};
 use std::path::PathBuf;
 
 pub struct CliPG {
-    api: PgAPI,
+    pub api: PgAPI,
     pub vjocs: Vec<Videojoc>,
     pub config: CliPgConfig,
     config_path: String,
@@ -56,9 +57,9 @@ impl CliPG {
     fn get_credentials(sconf: &ServerConfig) -> (String, String, String) {
         (sconf.url.clone(), sconf.usuari.clone(), sconf.contrasenya.clone())
     }
-    pub fn default() -> Self {
+    pub fn default(config_path: Option<PathBuf>) -> Self {
         // Obtenim les credencials per el client
-        let config_path = Self::get_config_path();
+        let config_path = config_path.unwrap_or_else(Self::get_config_path);
         let config = Self::load_or_create_config(Some(config_path.clone()));
         let credencials: (String, String, String) = Self::get_credentials(&config.server);
         CliPG {
@@ -110,12 +111,19 @@ impl CliPG {
         } else {
             cpath = path.unwrap();
         }
+        let config;
         if !cpath.exists() {
-            let config = CliPgConfig::default();
-            Self::save_config(&config, None);
+            config = CliPgConfig::default();
+            Self::save_config(&config, Some(cpath));
+        } else {
+            let content = fs::read_to_string(&cpath).unwrap();
+            if content == "" {
+                config = CliPgConfig::default();
+                Self::save_config(&config, None);
+            } else {
+                config = toml::from_str(&content).unwrap();
+            }
         }
-        let content = fs::read_to_string(&cpath).unwrap();
-        let config = toml::from_str(&content).unwrap();
         config
     }
     fn save_config(config: &CliPgConfig, path: Option<PathBuf>) {
@@ -129,7 +137,9 @@ impl CliPG {
             fs::create_dir_all(dir).unwrap();
         }
         let toml = toml::to_string_pretty(config).unwrap();
-        fs::write(cpath, toml).unwrap();
+        let mut f = File::create(&cpath).unwrap();
+        f.write_all(toml.as_bytes()).unwrap();
+        drop(f);
     }
     fn load_local_jocs(&mut self) -> Vec<VideojocConfig> {
         self.vjocs = Vec::new();
@@ -189,11 +199,40 @@ impl eframe::App for CliPG {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::cli_pg::{CliPG, CliPgConfig, VideojocConfig};
-    use crate::pg_api::PgAPI;
+    use crate::cli_pg::{CliPG, CliPgConfig, Videojoc, VideojocConfig};
+    use crate::pg_api::{PartidesGuardadesAPI, PgAPI};
+    use crate::videojoc::partida_guardada::PartidaGuardada;
+    use std::ffi::OsString;
+    use std::fs;
     use std::fs::File;
     use std::io::{Read, Write};
     use std::path::PathBuf;
+    pub struct FakeAPI_fase1;
+    impl PartidesGuardadesAPI for FakeAPI_fase1 {
+        fn probar_connexio(&self) -> bool {
+            true
+        }
+        fn get_videojocs(&self) -> Vec<String> {
+            Vec::new()
+        }
+        fn get_partides_guardades(&self, _: &Videojoc) -> Vec<PartidaGuardada> {
+            let mut v = Vec::new();
+            let p1 = PartidaGuardada {
+                videojoc: "Joc".to_string(),
+                nom: OsString::from("save1.txt"),
+                path: PathBuf::new(),
+                timestamp: 245528886,
+                hash: "02d47a22e09f46731a58dbe7cb299c0315c6760aec7557e8ca6e87090fc85dfd".to_string(),
+            };
+            v.push(p1);
+            v
+        }
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
+            "".to_string()
+        }
+    }
     fn get_dummy_cli_pg() -> CliPG {
         let url = "http://localhost:8000".to_string();
         let usuari = "admin".to_string();
@@ -313,16 +352,6 @@ partides_guardades = []
         assert_eq!(cli.vjocs[0].nom, "Mount & blade Warband 2");
         assert_eq!(cli.vjocs[1].nom, "Napoleón TW HD");
         assert_eq!(cli.vjocs[2].nom, "Total War 40k");
-    }
-    #[test]
-    fn test_sync_joc() {
-        // NO testegem res ja que el metode sync crida només el sync del videjoc
-        assert!(true);
-    }
-    #[test]
-    fn test_sync_all() {
-        // NO testegem res ja que el metode sync_all nomes fa un bucle cridant el sync_joc
-        assert!(true);
     }
     #[test]
     fn test_afegir_joc() {
@@ -454,5 +483,81 @@ path = "/home/patata/Space Marine 3"
 partides_guardades = []
 "#
         );
+    }
+    #[test]
+    fn test_sync_joc() {
+        // NO testegem res ja que el metode sync crida només el sync del videjoc
+        assert!(true);
+    }
+    #[test]
+    fn test_full_process() {
+        let test_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync");
+        let conf_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync/conf.toml");
+        let joc_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync/Joc");
+        let mut clipg = test_full_process_fase_0(&test_path, &conf_path, &joc_path);
+        test_full_process_fase_1(&mut clipg);
+    }
+    fn test_full_process_fase_0(test_path: &PathBuf, conf_path: &PathBuf, joc_path: &PathBuf) -> CliPG {
+        /*
+         * PRE:
+         * El fitxer de configuracio no existeix.
+         * En local no tenim cap fitxer a "Joc".
+         * POST:
+         * Inicialitzem un CliPG.
+         * Aixo crea un primer conf.toml sense cap joc habilitat.
+         * Habilitem el "Joc". Aixo actualitza el conf.toml amb el joc habilitat.
+         */
+        // Fem neteja: eliminem tots els fitxers de test_sync
+        fs::remove_dir_all(test_path).unwrap();
+        fs::create_dir(test_path).unwrap();
+        fs::create_dir(joc_path).unwrap();
+        // Comencem el test
+        let mut clipg = CliPG::default(Some(conf_path.clone()));
+        let config_content = read_file_sync(clipg.config_path.clone());
+        assert_eq!(
+            config_content,
+            r#"[server]
+url = "http://localhost:8000"
+usuari = "admin"
+contrasenya = "admin"
+
+[videojocs_habilitats]
+list = []
+"#
+        );
+        let result = clipg.afegir_joc(joc_path.to_str().unwrap().to_string());
+        assert!(result.is_ok());
+        let config_content = read_file_sync(clipg.config_path.clone());
+        assert_eq!(
+            config_content,
+            r#"[server]
+url = "http://localhost:8000"
+usuari = "admin"
+contrasenya = "admin"
+
+[[videojocs_habilitats.list]]
+nom = "Joc"
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc"
+partides_guardades = []
+"#
+        );
+        clipg
+    }
+    fn test_full_process_fase_1(clipg: &mut CliPG) {
+        /*
+         * PRE:
+         * El fitxer de configuracio te habilitat "Joc" sense cap partida.
+         * En local no tenim cap fitxer a "Joc".
+         * En remot tenim el save1.txt.
+         * POST:
+         * Fem una primera sincronitzacio que crearà el fitxer save1.txt a local.
+         * S'actualitzarà el conf.toml amb el save1.txt.
+         */
+        let s = FakeAPI_fase1 {};
+        // TODO: com puc fer que clipg.api sigui de tipus FakeAPI_fase1?
+        clipg.api = PgAPI::new(s);
+        let result = clipg.sync_all(false);
+        println!("{}", result);
+        assert!(result.contains("save1.txt"));
     }
 }
