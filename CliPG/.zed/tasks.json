@@ -1,0 +1,7 @@
+[
+  {
+    "label": "CliPG tests (1 thread)",
+    "command": "RUST_BACKTRACE=1 cargo",
+    "args": ["test", "--package", "CliPG", "--", "--test-threads=1"],
+  },
+]

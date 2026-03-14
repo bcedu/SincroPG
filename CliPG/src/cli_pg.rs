@@ -165,10 +165,10 @@ impl CliPG {
     pub fn sync_joc(&self, joc: &Videojoc, test_mode: bool) -> String {
         let mut joc_m = Videojoc::from(joc);
         let joc_res = joc_m.sync(&self.api, test_mode);
-        format!("* {}:\n{joc_res}", joc.nom.clone().to_str().unwrap())
+        format!("* {}:\n    {joc_res}", joc.nom.clone().to_str().unwrap())
     }
     pub fn sync_all(&mut self, test_mode: bool) -> String {
-        let res = "";
+        let mut res = String::new();
         let mut new_config = CliPgConfig {
             server: self.config.server.clone(),
             videojocs_habilitats: VideojocConfigList { list: Vec::new() },
@@ -176,7 +176,7 @@ impl CliPG {
         self.load_local_jocs();
         for v in self.vjocs.iter() {
             let joc_res = self.sync_joc(v, test_mode);
-            let res = format!("{}\n{}", res, joc_res);
+            res.push_str(&format!("{}\n{}", res.clone(), joc_res.as_str()));
             new_config.videojocs_habilitats.list.push(VideojocConfig {
                 nom: v.nom.to_str().unwrap().to_string().clone(),
                 path: v.local_folder.to_str().unwrap().to_string().clone(),
@@ -217,10 +217,11 @@ pub mod tests {
         }
         fn get_partides_guardades(&self, _: &Videojoc) -> Vec<PartidaGuardada> {
             let mut v = Vec::new();
+            let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync/Joc/save1.txt");
             let p1 = PartidaGuardada {
                 videojoc: "Joc".to_string(),
                 nom: OsString::from("save1.txt"),
-                path: PathBuf::new(),
+                path: path,
                 timestamp: 245528886,
                 hash: "02d47a22e09f46731a58dbe7cb299c0315c6760aec7557e8ca6e87090fc85dfd".to_string(),
             };
@@ -553,11 +554,9 @@ partides_guardades = []
          * Fem una primera sincronitzacio que crearà el fitxer save1.txt a local.
          * S'actualitzarà el conf.toml amb el save1.txt.
          */
-        let s = FakeAPI_fase1 {};
-        // TODO: com puc fer que clipg.api sigui de tipus FakeAPI_fase1?
-        clipg.api = Box::new(FakeAPI_fase1);
+        clipg.api = Box::new(FakeAPI_fase1 {});
         let result = clipg.sync_all(false);
-        println!("{}", result);
-        assert!(result.contains("save1.txt"));
+        assert!(result.contains("⬇️ Descarregar partida remota: save1.txt"));
+        //TODO: acavar de fer els asserts que toquin en la f    ase 1
     }
 }

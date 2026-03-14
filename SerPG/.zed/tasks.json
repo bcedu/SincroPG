@@ -1,0 +1,7 @@
+[
+  {
+    "label": "SerPG tests (1 thread)",
+    "command": "RUST_BACKTRACE=1 cargo",
+    "args": ["test", "--package", "SerPG", "--", "--test-threads=1"],
+  },
+]
