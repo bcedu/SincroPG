@@ -9,7 +9,7 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 
 pub struct CliPG {
-    pub api: PgAPI,
+    pub api: Box<dyn PartidesGuardadesAPI>,
     pub vjocs: Vec<Videojoc>,
     pub config: CliPgConfig,
     config_path: String,
@@ -63,7 +63,7 @@ impl CliPG {
         let config = Self::load_or_create_config(Some(config_path.clone()));
         let credencials: (String, String, String) = Self::get_credentials(&config.server);
         CliPG {
-            api: PgAPI::new(credencials.0, credencials.1, credencials.2),
+            api: Box::new(PgAPI::new(credencials.0, credencials.1, credencials.2)),
             vjocs: Vec::new(),
             config,
             config_path: config_path.to_str().unwrap().to_string(),
@@ -250,7 +250,7 @@ pub mod tests {
             partides_guardades: Vec::new(),
         });
         CliPG {
-            api: PgAPI::new(url.clone(), usuari.clone(), contrassenya.clone()),
+            api: Box::new(PgAPI::new(url.clone(), usuari.clone(), contrassenya.clone())),
             vjocs: Vec::new(),
             config: config,
             config_path: test_path.to_str().unwrap().to_string(),
@@ -279,7 +279,7 @@ pub mod tests {
             partides_guardades: Vec::new(),
         });
         CliPG {
-            api: PgAPI::new(url.clone(), usuari.clone(), contrassenya.clone()),
+            api: Box::new(PgAPI::new(url.clone(), usuari.clone(), contrassenya.clone())),
             vjocs: Vec::new(),
             config: config,
             config_path: conf_path.to_str().unwrap().to_string(),
@@ -555,7 +555,7 @@ partides_guardades = []
          */
         let s = FakeAPI_fase1 {};
         // TODO: com puc fer que clipg.api sigui de tipus FakeAPI_fase1?
-        clipg.api = PgAPI::new(s);
+        clipg.api = Box::new(FakeAPI_fase1);
         let result = clipg.sync_all(false);
         println!("{}", result);
         assert!(result.contains("save1.txt"));

@@ -59,15 +59,15 @@ impl Videojoc {
             }
         }
     }
-    pub fn fetch_partides_remotes<A: PartidesGuardadesAPI>(&mut self, api: &A) {
+    pub fn fetch_partides_remotes(&mut self, api: &Box<dyn PartidesGuardadesAPI>) {
         self.partides_remotes.clear();
         for partida_remota in api.get_partides_guardades(&self) {
             self.partides_remotes.push(partida_remota)
         }
     }
-    pub fn sync<A: PartidesGuardadesAPI>(&mut self, api: &A, test_mode: bool) -> String {
+    pub fn sync(&mut self, api: &Box<dyn PartidesGuardadesAPI>, test_mode: bool) -> String {
         self.load_partides_locals();
-        self.fetch_partides_remotes(api);
+        self.fetch_partides_remotes(&api);
         let locals: HashMap<_, _> = self.partides_locals.iter().map(|p| (p.nom.to_str().unwrap().to_string(), p)).collect();
         let remotes: HashMap<_, _> = self.partides_remotes.iter().map(|p| (p.nom.to_str().unwrap().to_string(), p)).collect();
         let guardades: HashMap<_, _> = self
@@ -93,7 +93,7 @@ impl Videojoc {
                         format!("❌ Eliminar local: {}", nom)
                     } else {
                         if !test_mode {
-                            local.pujar_partida_guardada(api);
+                            local.pujar_partida_guardada(&api);
                         }
                         format!("⬆️ Pujar partida local: {}", nom)
                     }
@@ -107,7 +107,7 @@ impl Videojoc {
                         format!("❌ Eliminar remot: {}", nom)
                     } else {
                         if !test_mode {
-                            remote.descarregar_partida_guardada(api);
+                            remote.descarregar_partida_guardada(&api);
                         }
                         format!("⬇️ Descarregar partida remota: {}", nom)
                     }
@@ -118,17 +118,17 @@ impl Videojoc {
                         format!("✔️ Partida OK: {}", nom)
                     } else if local.hash == last_sync_hash {
                         if !test_mode {
-                            remote.descarregar_partida_guardada(api);
+                            remote.descarregar_partida_guardada(&api);
                         }
                         format!("⬇️ Descarregar (remot modificat): {}", nom)
                     } else if remote.hash == last_sync_hash {
                         if !test_mode {
-                            local.pujar_partida_guardada(api);
+                            local.pujar_partida_guardada(&api);
                         }
                         format!("⬆️ Pujar partida local (local modificat): {}", nom)
                     } else {
                         if !test_mode {
-                            self.resoldre_conflicte(local, remote, api);
+                            self.resoldre_conflicte(local, remote, &api);
                         }
                         format!("⚠️ Conflicte: {}", nom)
                     }
@@ -157,7 +157,7 @@ impl Videojoc {
             );
         }
     }
-    pub fn resoldre_conflicte<A: PartidesGuardadesAPI>(&self, local: &PartidaGuardada, remot: &PartidaGuardada, api: &A) {
+    pub fn resoldre_conflicte(&self, local: &PartidaGuardada, remot: &PartidaGuardada, api: &Box<dyn PartidesGuardadesAPI>) {
         // Donarem prioritat al que tingui el timestamp mes recent. El que tingui el timestamp
         // mes antic es renombara posant a davant del nom "bck_yyyymmddhhss_"
         let nou_nom = format!("bck_{0}_{1}", Local::now().format("%Y%m%d%H%M%S"), remot.nom.to_str().unwrap());
@@ -264,8 +264,8 @@ pub mod tests {
     fn get_videojoc_w40k() -> Videojoc {
         Videojoc::new(get_videojoc_path_w40k())
     }
-    pub fn get_fake_api() -> FakeAPI {
-        FakeAPI
+    pub fn get_fake_api() -> Box<dyn PartidesGuardadesAPI> {
+        Box::new(FakeAPI)
     }
     #[test]
     fn test_new() {

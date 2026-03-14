@@ -59,10 +59,10 @@ impl PartidaGuardada {
             self.timestamp = FileTime::from_last_modification_time(&fs::metadata(&self.path).unwrap()).nanoseconds();
         }
     }
-    pub fn pujar_partida_guardada<A: PartidesGuardadesAPI>(&self, api: &A) {
+    pub fn pujar_partida_guardada(&self, api: &Box<dyn PartidesGuardadesAPI>) {
         api.post_partida_guardada(&self);
     }
-    pub fn descarregar_partida_guardada<A: PartidesGuardadesAPI>(&self, api: &A) {
+    pub fn descarregar_partida_guardada(&self, api: &Box<dyn PartidesGuardadesAPI>) {
         let contingut = api.get_partida_guardada(&self);
         self.write_file_sync(contingut.as_str());
     }
