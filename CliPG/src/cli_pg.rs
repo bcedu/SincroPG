@@ -843,7 +843,6 @@ hash = "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4"
         );
         // Verifiquem el contingut del conf.toml
         let config_content = read_file_sync(conf_path.to_str().unwrap().to_string());
-        println!("PPP|{}|PPP", config_content);
         assert!(config_content.contains(
             r#"_save4.txt"
 hash = "12ee21760f19253fca62f5d0cdf480d1477c37300e56c2af141bcf35226a89b3"
