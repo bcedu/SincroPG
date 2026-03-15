@@ -288,6 +288,42 @@ pub mod tests {
             "Pastanaga bullida@ 3 sl retrno".to_string()
         }
     }
+    pub struct FakeAPI_fase5;
+    impl PartidesGuardadesAPI for FakeAPI_fase5 {
+        fn probar_connexio(&self) -> bool {
+            true
+        }
+        fn get_videojocs(&self) -> Vec<String> {
+            Vec::new()
+        }
+        fn get_partides_guardades(&self, _: &Videojoc) -> Vec<PartidaGuardada> {
+            let mut v = Vec::new();
+            let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync/Joc/save3.txt");
+            let p1 = PartidaGuardada {
+                videojoc: "Joc".to_string(),
+                nom: OsString::from("save3.txt"),
+                path: path,
+                timestamp: 245528886,
+                hash: "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4".to_string(),
+            };
+            v.push(p1);
+            let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync/Joc/save4.txt");
+            let p1 = PartidaGuardada {
+                videojoc: "Joc".to_string(),
+                nom: OsString::from("save4.txt"),
+                path: path,
+                timestamp: 245528886,
+                hash: "aa".to_string(),
+            };
+            v.push(p1);
+            v
+        }
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
+            "save 4 alt 2".to_string()
+        }
+    }
     fn get_dummy_cli_pg() -> CliPG {
         let url = "http://localhost:8000".to_string();
         let usuari = "admin".to_string();
@@ -660,7 +696,7 @@ hash = "acbbaa798a883fb0be7534092b20f5188fb07799a1c175c28f8fb1b03bc63ae2"
             result,
             r#"
 * Joc:
-    ✔️ Partida OK: save1.txt
+    ✔ Partida OK: save1.txt
 "#
         );
         clipg.api = Box::new(FakeAPI_fase2 {});
@@ -790,5 +826,43 @@ hash = "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4"
          * EL save3.txt ha de seguir igual al tindre els amteixos hash.
          * El save4.txt al tindre hash diferents en local i remot s'han de duplicar.
          */
+        // Eliminem el fitxer conf.toml
+        std::fs::remove_file(conf_path).unwrap();
+        // Creem el save4.txt a local i remot
+        let save4_path = joc_path.join("save4.txt");
+        std::fs::write(&save4_path, "save 4").unwrap();
+        clipg.api = Box::new(FakeAPI_fase5 {});
+        let result = clipg.sync_all(false);
+        assert_eq!(
+            result,
+            r#"
+* Joc:
+    ✔ Partida OK: save3.txt
+    ⚠ Conflicte: save4.txt
+"#
+        );
+        // Verifiquem el contingut del conf.toml
+        let config_content = read_file_sync(conf_path.to_str().unwrap().to_string());
+        println!("PPP|{}|PPP", config_content);
+        assert_eq!(
+            config_content,
+            r#"[server]
+url = "http://localhost:8000"
+usuari = "admin"
+contrasenya = "admin"
+
+[[videojocs_habilitats.list]]
+nom = "Joc"
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test/Joc"
+
+[[videojocs_habilitats.list.partides_guardades]]
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save4.txt"
+hash = "d623d87b3ef0b2b93f99637081a29ca70fa78c527f1f28a9242a7e93910fb194"
+
+[[videojocs_habilitats.list.partides_guardades]]
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save3.txt"
+hash = "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4"
+"#
+        );
     }
 }

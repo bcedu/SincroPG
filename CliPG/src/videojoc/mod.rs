@@ -115,7 +115,7 @@ impl Videojoc {
                 // existeixen tots dos
                 (Some(local), Some(remote)) => {
                     if local.hash == remote.hash {
-                        format!("    ✔️ Partida OK: {}\n", nom)
+                        format!("    ✔ Partida OK: {}\n", nom)
                     } else if local.hash == last_sync_hash {
                         if !test_mode {
                             remote.descarregar_partida_guardada(&api);
@@ -130,7 +130,7 @@ impl Videojoc {
                         if !test_mode {
                             self.resoldre_conflicte(local, remote, &api);
                         }
-                        format!("    ⚠️ Conflicte: {}\n", nom)
+                        format!("    ⚠ Conflicte: {}\n", nom)
                     }
                 }
                 _ => continue,
@@ -163,8 +163,11 @@ impl Videojoc {
         if local.timestamp >= remot.timestamp {
             // Pujem la partida remot pero renombrada al servidor;
             let mut remot = PartidaGuardada::from_partida_guardada(remot);
-            remot.nom = OsString::from(nou_nom);
+            remot.nom = OsString::from(nou_nom.clone());
+            remot.path.set_file_name(nou_nom);
             api.post_partida_guardada(&remot);
+            // La guardem en local tambe
+            remot.descarregar_partida_guardada(api);
             // Pujem la partida local al servidor (aixo sobreescriu la que hi havia)
             api.post_partida_guardada(&local);
         } else {
@@ -372,9 +375,9 @@ pub mod tests {
         });
         let mut v = get_videojoc_w40k().with_partides_guardades_list(&partides_guardades);
         let resultat = v.sync(&get_fake_api(), true);
-        let resultat_esperat = "    ✔️ Partida OK: save1.txt
+        let resultat_esperat = "    ✔ Partida OK: save1.txt
     ⬆ Pujar partida local: save2.txt
-    ⚠️ Conflicte: save3.txt
+    ⚠ Conflicte: save3.txt
     ⬆ Pujar partida local (local modificat): save4.txt
     ❌ Eliminar remot: save_deleted_local.txt
     ❌ Eliminar local: save_deleted_remote.txt
