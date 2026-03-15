@@ -497,6 +497,7 @@ partides_guardades = []
         let joc_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync/Joc");
         let mut clipg = test_full_process_fase_0(&test_path, &conf_path, &joc_path);
         test_full_process_fase_1(&mut clipg, &joc_path, &conf_path);
+        test_full_process_fase_2(&mut clipg, &joc_path, &conf_path);
     }
     fn test_full_process_fase_0(test_path: &PathBuf, conf_path: &PathBuf, joc_path: &PathBuf) -> CliPG {
         /*
@@ -583,5 +584,55 @@ path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/tes
 hash = "acbbaa798a883fb0be7534092b20f5188fb07799a1c175c28f8fb1b03bc63ae2"
 "#
         );
+    }
+    fn test_full_process_fase_2(clipg: &mut CliPG, joc_path: &PathBuf, conf_path: &PathBuf) {
+        /*
+         * PRE:
+         * El fitxer de configuracio te habilitat "Joc" amb 1 partida (save1.txt).
+         * En local tenim el save1.txt a "Joc".
+         * En remot tenim el save1.txt.
+         * POST:
+         * Fem una primera sincronitzacio que no fa res perque no ha canviat res.
+         * En remot, canviem el hash del save1.txt per simular que l'han canviat.
+         * Tornem a sincronitzar i s'ha de actuialitzar el save1.txt local
+         * i també el conf.toml amb el nou hash.
+         */
+    }
+    fn test_full_process_fase_3(clipg: &mut CliPG, joc_path: &PathBuf, conf_path: &PathBuf) {
+        /*
+         * PRE:
+         * El fitxer de configuracio te habilitat "Joc" amb 1 partida (save1.txt).
+         * En local tenim el save1.txt a "Joc".
+         * En remot tenim el save1.txt.
+         * POST:
+         * Creem el save2.txt en local i eliminem el save1.txt.
+         * Sincronitzem: s'elimina el save1.txt de remot i es crea el save2.txt.
+         * S'actualitza el conf.toml per mostrar que ja nomes tenim el save2.txt
+         */
+    }
+    fn test_full_process_fase_4(clipg: &mut CliPG, joc_path: &PathBuf, conf_path: &PathBuf) {
+        /*
+         * PRE:
+         * El fitxer de configuracio te habilitat "Joc" amb 1 partida (save2.txt).
+         * En local tenim el save2.txt a "Joc".
+         * En remot tenim el save2.txt.
+         * POST:
+         * Creem el save3.txt en remot i eliminem el save2.txt del remot.
+         * Sincronitzem: s'elimina el save2.txt de local i es crea el save3.txt al local.
+         * S'actualitza el conf.toml per mostrar que ja nomes tenim el save3.txt
+         */
+    }
+    fn test_full_process_fase_5(clipg: &mut CliPG, joc_path: &PathBuf, conf_path: &PathBuf) {
+        /*
+         * PRE:
+         * El fitxer de configuracio te habilitat "Joc" amb 1 partida (save3.txt).
+         * En local tenim el save3.txt a "Joc".
+         * En remot tenim el save3.txt.
+         * POST:
+         * Eliminaem el fitxer conf.toml.
+         * Creem el save4.txt a local i remot. Sincronitzem:
+         * EL save3.txt ha de seguir igual al tindre els amteixos hash.
+         * El save4.txt al tindre hash diferents en local i remot s'han de duplicar.
+         */
     }
 }
