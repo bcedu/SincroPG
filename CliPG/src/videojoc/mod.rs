@@ -109,7 +109,7 @@ impl Videojoc {
                         if !test_mode {
                             remote.descarregar_partida_guardada(&api);
                         }
-                        format!("    ⬇️ Descarregar partida remota: {}\n", nom)
+                        format!("    ⬇ Descarregar partida remota: {}\n", nom)
                     }
                 }
                 // existeixen tots dos
@@ -379,7 +379,7 @@ pub mod tests {
     ❌ Eliminar remot: save_deleted_local.txt
     ❌ Eliminar local: save_deleted_remote.txt
     ⬇ Descarregar (remot modificat): save_remote_modified.txt
-    ⬇️ Descarregar partida remota: save_test_2
+    ⬇ Descarregar partida remota: save_test_2
 ";
         assert_eq!(resultat_esperat, resultat);
     }

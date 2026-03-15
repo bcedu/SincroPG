@@ -261,6 +261,33 @@ pub mod tests {
             "Pastanaga bullida@2 la venganza".to_string()
         }
     }
+    pub struct FakeAPI_fase4;
+    impl PartidesGuardadesAPI for FakeAPI_fase4 {
+        fn probar_connexio(&self) -> bool {
+            true
+        }
+        fn get_videojocs(&self) -> Vec<String> {
+            Vec::new()
+        }
+        fn get_partides_guardades(&self, _: &Videojoc) -> Vec<PartidaGuardada> {
+            let mut v = Vec::new();
+            let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync/Joc/save3.txt");
+            let p1 = PartidaGuardada {
+                videojoc: "Joc".to_string(),
+                nom: OsString::from("save3.txt"),
+                path: path,
+                timestamp: 245528886,
+                hash: "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4".to_string(),
+            };
+            v.push(p1);
+            v
+        }
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
+            "Pastanaga bullida@ 3 sl retrno".to_string()
+        }
+    }
     fn get_dummy_cli_pg() -> CliPG {
         let url = "http://localhost:8000".to_string();
         let usuari = "admin".to_string();
@@ -589,7 +616,7 @@ partides_guardades = []
         clipg.api = Box::new(FakeAPI_fase1 {});
         let result = clipg.sync_all(false);
         // Revisem que el resum que ens retornen indica que s'ha descarregat el save1.txt
-        assert!(result.contains("⬇️ Descarregar partida remota: save1.txt"));
+        assert!(result.contains("⬇ Descarregar partida remota: save1.txt"));
         // Revisem que el fitxer save1.txt existeix a local i el seu contingut
         let save_path = joc_path.join("save1.txt");
         assert!(save_path.exists());
@@ -597,7 +624,6 @@ partides_guardades = []
         assert_eq!(save_content, r#"Pastanaga bullida@"#);
         // Revisem el contingut del conf.toml
         let config_content = read_file_sync(conf_path.to_str().unwrap().to_string());
-        println!("{}", config_content);
         assert_eq!(
             config_content,
             r#"[server]
@@ -649,7 +675,6 @@ hash = "acbbaa798a883fb0be7534092b20f5188fb07799a1c175c28f8fb1b03bc63ae2"
         );
         // Revisem el contingut del conf.toml
         let config_content = read_file_sync(conf_path.to_str().unwrap().to_string());
-        println!("{}", config_content);
         assert_eq!(
             config_content,
             r#"[server]
@@ -685,13 +710,30 @@ hash = "3b136fcad41f6a8fb66b38cae89aaba00f30ac7f79797fcd8a46bc13a733811a"
         // Sincronitzem
         clipg.api = Box::new(FakeAPI_fase2 {});
         let result = clipg.sync_all(false);
-        println!("{}", result);
         assert_eq!(
             result,
             r#"
 * Joc:
     ❌ Eliminar remot: save1.txt
     ⬆ Pujar partida local: save2.txt
+"#
+        );
+        // Verifiquem que s'ha actualitzat el conf.toml
+        let config_content = read_file_sync(conf_path.to_str().unwrap().to_string());
+        assert_eq!(
+            config_content,
+            r#"[server]
+url = "http://localhost:8000"
+usuari = "admin"
+contrasenya = "admin"
+
+[[videojocs_habilitats.list]]
+nom = "Joc"
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc"
+
+[[videojocs_habilitats.list.partides_guardades]]
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save2.txt"
+hash = "47a1e807edaccae9bdc6d5f5eb1da36becbd1484b8d394e8a572597af65302b2"
 "#
         );
     }
@@ -706,6 +748,35 @@ hash = "3b136fcad41f6a8fb66b38cae89aaba00f30ac7f79797fcd8a46bc13a733811a"
          * Sincronitzem: s'elimina el save2.txt de local i es crea el save3.txt al local.
          * S'actualitza el conf.toml per mostrar que ja nomes tenim el save3.txt
          */
+        // Sincronitzem. En remote s'ha eliminat save2 i creat save3
+        clipg.api = Box::new(FakeAPI_fase4 {});
+        let result = clipg.sync_all(false);
+        assert_eq!(
+            result,
+            r#"
+* Joc:
+    ❌ Eliminar local: save2.txt
+    ⬇ Descarregar partida remota: save3.txt
+"#
+        );
+        // Verifiquem el contingut del conf.toml
+        let config_content = read_file_sync(conf_path.to_str().unwrap().to_string());
+        assert_eq!(
+            config_content,
+            r#"[server]
+url = "http://localhost:8000"
+usuari = "admin"
+contrasenya = "admin"
+
+[[videojocs_habilitats.list]]
+nom = "Joc"
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc"
+
+[[videojocs_habilitats.list.partides_guardades]]
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save3.txt"
+hash = "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4"
+"#
+        );
     }
     fn test_full_process_fase_5(clipg: &mut CliPG, joc_path: &PathBuf, conf_path: &PathBuf) {
         /*
