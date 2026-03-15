@@ -162,9 +162,8 @@ impl CliPG {
         }
         error_jocs
     }
-    pub fn sync_joc(&self, joc: &Videojoc, test_mode: bool) -> String {
-        let mut joc_m = Videojoc::from(joc);
-        let joc_res = joc_m.sync(&self.api, test_mode);
+    pub fn sync_joc(&self, joc: &mut Videojoc, test_mode: bool) -> String {
+        let joc_res = joc.sync(&self.api, test_mode);
         format!("* {}:\n    {joc_res}", joc.nom.clone().to_str().unwrap())
     }
     pub fn sync_all(&mut self, test_mode: bool) -> String {
@@ -175,12 +174,13 @@ impl CliPG {
         };
         self.load_local_jocs();
         for v in self.vjocs.iter() {
-            let joc_res = self.sync_joc(v, test_mode);
+            let mut updated_v = Videojoc::from(v);
+            let joc_res = self.sync_joc(&mut updated_v, test_mode);
             res.push_str(&format!("{}\n{}", res.clone(), joc_res.as_str()));
             new_config.videojocs_habilitats.list.push(VideojocConfig {
-                nom: v.nom.to_str().unwrap().to_string().clone(),
-                path: v.local_folder.to_str().unwrap().to_string().clone(),
-                partides_guardades: v.get_partides_guardades_list(),
+                nom: updated_v.nom.to_str().unwrap().to_string().clone(),
+                path: updated_v.local_folder.to_str().unwrap().to_string().clone(),
+                partides_guardades: updated_v.get_partides_guardades_list(),
             });
         }
         Self::save_config(&new_config, Some(PathBuf::from(self.config_path.clone())));
@@ -231,7 +231,7 @@ pub mod tests {
         fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
-            "".to_string()
+            "Pastanaga bullida@".to_string()
         }
     }
     fn get_dummy_cli_pg() -> CliPG {
@@ -496,7 +496,7 @@ partides_guardades = []
         let conf_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync/conf.toml");
         let joc_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync/Joc");
         let mut clipg = test_full_process_fase_0(&test_path, &conf_path, &joc_path);
-        test_full_process_fase_1(&mut clipg);
+        test_full_process_fase_1(&mut clipg, &joc_path, &conf_path);
     }
     fn test_full_process_fase_0(test_path: &PathBuf, conf_path: &PathBuf, joc_path: &PathBuf) -> CliPG {
         /*
@@ -544,7 +544,7 @@ partides_guardades = []
         );
         clipg
     }
-    fn test_full_process_fase_1(clipg: &mut CliPG) {
+    fn test_full_process_fase_1(clipg: &mut CliPG, joc_path: &PathBuf, conf_path: &PathBuf) {
         /*
          * PRE:
          * El fitxer de configuracio te habilitat "Joc" sense cap partida.
@@ -554,9 +554,34 @@ partides_guardades = []
          * Fem una primera sincronitzacio que crearà el fitxer save1.txt a local.
          * S'actualitzarà el conf.toml amb el save1.txt.
          */
+        // Fem sincronitzacio amb el fake_apiq ue ens diu que hi ha el save1.txt a remot
         clipg.api = Box::new(FakeAPI_fase1 {});
         let result = clipg.sync_all(false);
+        // Revisem que el resum que ens retornen indica que s'ha descarregat el save1.txt
         assert!(result.contains("⬇️ Descarregar partida remota: save1.txt"));
-        //TODO: acavar de fer els asserts que toquin en la f    ase 1
+        // Revisem que el fitxer save1.txt existeix a local i el seu contingut
+        let save_path = joc_path.join("save1.txt");
+        assert!(save_path.exists());
+        let save_content = read_file_sync(save_path.to_str().unwrap().to_string());
+        assert_eq!(save_content, r#"Pastanaga bullida@"#);
+        // Revisem el contingut del conf.toml
+        let config_content = read_file_sync(conf_path.to_str().unwrap().to_string());
+        println!("{}", config_content);
+        assert_eq!(
+            config_content,
+            r#"[server]
+url = "http://localhost:8000"
+usuari = "admin"
+contrasenya = "admin"
+
+[[videojocs_habilitats.list]]
+nom = "Joc"
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc"
+
+[[videojocs_habilitats.list.partides_guardades]]
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save1.txt"
+hash = "acbbaa798a883fb0be7534092b20f5188fb07799a1c175c28f8fb1b03bc63ae2"
+"#
+        );
     }
 }
