@@ -90,12 +90,12 @@ impl Videojoc {
                         if !test_mode {
                             local.eliminar_partida_guardada();
                         }
-                        format!("❌ Eliminar local: {}", nom)
+                        format!("    ❌ Eliminar local: {}\n", nom)
                     } else {
                         if !test_mode {
                             local.pujar_partida_guardada(&api);
                         }
-                        format!("⬆️ Pujar partida local: {}", nom)
+                        format!("    ⬆ Pujar partida local: {}\n", nom)
                     }
                 }
                 // només remot
@@ -104,40 +104,39 @@ impl Videojoc {
                         if !test_mode {
                             api.delete_partida_guardada(&remote);
                         }
-                        format!("❌ Eliminar remot: {}", nom)
+                        format!("    ❌ Eliminar remot: {}\n", nom)
                     } else {
                         if !test_mode {
                             remote.descarregar_partida_guardada(&api);
                         }
-                        format!("⬇️ Descarregar partida remota: {}", nom)
+                        format!("    ⬇️ Descarregar partida remota: {}\n", nom)
                     }
                 }
                 // existeixen tots dos
                 (Some(local), Some(remote)) => {
                     if local.hash == remote.hash {
-                        format!("✔️ Partida OK: {}", nom)
+                        format!("    ✔️ Partida OK: {}\n", nom)
                     } else if local.hash == last_sync_hash {
                         if !test_mode {
                             remote.descarregar_partida_guardada(&api);
                         }
-                        format!("⬇ Descarregar (remot modificat): {}", nom)
+                        format!("    ⬇ Descarregar (remot modificat): {}\n", nom)
                     } else if remote.hash == last_sync_hash {
                         if !test_mode {
                             local.pujar_partida_guardada(&api);
                         }
-                        format!("⬆️ Pujar partida local (local modificat): {}", nom)
+                        format!("    ⬆ Pujar partida local (local modificat): {}\n", nom)
                     } else {
                         if !test_mode {
                             self.resoldre_conflicte(local, remote, &api);
                         }
-                        format!("⚠️ Conflicte: {}", nom)
+                        format!("    ⚠️ Conflicte: {}\n", nom)
                     }
                 }
                 _ => continue,
             };
-            println!("{}", msg);
+            print!("{}", msg);
             resultat.push_str(&msg);
-            resultat.push('\n');
         }
         self.actualitzar_partides_guardades();
         resultat
@@ -373,14 +372,14 @@ pub mod tests {
         });
         let mut v = get_videojoc_w40k().with_partides_guardades_list(&partides_guardades);
         let resultat = v.sync(&get_fake_api(), true);
-        let resultat_esperat = "✔️ Partida OK: save1.txt
-⬆️ Pujar partida local: save2.txt
-⚠️ Conflicte: save3.txt
-⬆️ Pujar partida local (local modificat): save4.txt
-❌ Eliminar remot: save_deleted_local.txt
-❌ Eliminar local: save_deleted_remote.txt
-⬇ Descarregar (remot modificat): save_remote_modified.txt
-⬇️ Descarregar partida remota: save_test_2
+        let resultat_esperat = "    ✔️ Partida OK: save1.txt
+    ⬆ Pujar partida local: save2.txt
+    ⚠️ Conflicte: save3.txt
+    ⬆ Pujar partida local (local modificat): save4.txt
+    ❌ Eliminar remot: save_deleted_local.txt
+    ❌ Eliminar local: save_deleted_remote.txt
+    ⬇ Descarregar (remot modificat): save_remote_modified.txt
+    ⬇️ Descarregar partida remota: save_test_2
 ";
         assert_eq!(resultat_esperat, resultat);
     }

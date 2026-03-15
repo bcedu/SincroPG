@@ -164,7 +164,7 @@ impl CliPG {
     }
     pub fn sync_joc(&self, joc: &mut Videojoc, test_mode: bool) -> String {
         let joc_res = joc.sync(&self.api, test_mode);
-        format!("* {}:\n    {joc_res}", joc.nom.clone().to_str().unwrap())
+        format!("* {}:\n{joc_res}", joc.nom.clone().to_str().unwrap())
     }
     pub fn sync_all(&mut self, test_mode: bool) -> String {
         let mut res = String::new();
@@ -678,6 +678,22 @@ hash = "3b136fcad41f6a8fb66b38cae89aaba00f30ac7f79797fcd8a46bc13a733811a"
          * Sincronitzem: s'elimina el save1.txt de remot i es crea el save2.txt.
          * S'actualitza el conf.toml per mostrar que ja nomes tenim el save2.txt
          */
+        // Creem el save2.txt
+        std::fs::write(&joc_path.join("save2.txt"), "save2.txt content").unwrap();
+        // Eliminem el save1.txt de local
+        fs::remove_file(&joc_path.join("save1.txt")).unwrap();
+        // Sincronitzem
+        clipg.api = Box::new(FakeAPI_fase2 {});
+        let result = clipg.sync_all(false);
+        println!("{}", result);
+        assert_eq!(
+            result,
+            r#"
+* Joc:
+    ❌ Eliminar remot: save1.txt
+    ⬆ Pujar partida local: save2.txt
+"#
+        );
     }
     fn test_full_process_fase_4(clipg: &mut CliPG, joc_path: &PathBuf, conf_path: &PathBuf) {
         /*
