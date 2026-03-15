@@ -120,7 +120,7 @@ impl Videojoc {
                         if !test_mode {
                             remote.descarregar_partida_guardada(&api);
                         }
-                        format!("⬇️ Descarregar (remot modificat): {}", nom)
+                        format!("⬇ Descarregar (remot modificat): {}", nom)
                     } else if remote.hash == last_sync_hash {
                         if !test_mode {
                             local.pujar_partida_guardada(&api);
@@ -379,7 +379,7 @@ pub mod tests {
 ⬆️ Pujar partida local (local modificat): save4.txt
 ❌ Eliminar remot: save_deleted_local.txt
 ❌ Eliminar local: save_deleted_remote.txt
-⬇️ Descarregar (remot modificat): save_remote_modified.txt
+⬇ Descarregar (remot modificat): save_remote_modified.txt
 ⬇️ Descarregar partida remota: save_test_2
 ";
         assert_eq!(resultat_esperat, resultat);

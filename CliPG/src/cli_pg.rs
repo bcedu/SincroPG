@@ -223,7 +223,7 @@ pub mod tests {
                 nom: OsString::from("save1.txt"),
                 path: path,
                 timestamp: 245528886,
-                hash: "02d47a22e09f46731a58dbe7cb299c0315c6760aec7557e8ca6e87090fc85dfd".to_string(),
+                hash: "acbbaa798a883fb0be7534092b20f5188fb07799a1c175c28f8fb1b03bc63ae2".to_string(),
             };
             v.push(p1);
             v
@@ -232,6 +232,33 @@ pub mod tests {
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
             "Pastanaga bullida@".to_string()
+        }
+    }
+    pub struct FakeAPI_fase2;
+    impl PartidesGuardadesAPI for FakeAPI_fase2 {
+        fn probar_connexio(&self) -> bool {
+            true
+        }
+        fn get_videojocs(&self) -> Vec<String> {
+            Vec::new()
+        }
+        fn get_partides_guardades(&self, _: &Videojoc) -> Vec<PartidaGuardada> {
+            let mut v = Vec::new();
+            let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync/Joc/save1.txt");
+            let p1 = PartidaGuardada {
+                videojoc: "Joc".to_string(),
+                nom: OsString::from("save1.txt"),
+                path: path,
+                timestamp: 245528886,
+                hash: "3b136fcad41f6a8fb66b38cae89aaba00f30ac7f79797fcd8a46bc13a733811a".to_string(),
+            };
+            v.push(p1);
+            v
+        }
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
+            "Pastanaga bullida@2 la venganza".to_string()
         }
     }
     fn get_dummy_cli_pg() -> CliPG {
@@ -498,6 +525,9 @@ partides_guardades = []
         let mut clipg = test_full_process_fase_0(&test_path, &conf_path, &joc_path);
         test_full_process_fase_1(&mut clipg, &joc_path, &conf_path);
         test_full_process_fase_2(&mut clipg, &joc_path, &conf_path);
+        test_full_process_fase_3(&mut clipg, &joc_path, &conf_path);
+        test_full_process_fase_4(&mut clipg, &joc_path, &conf_path);
+        test_full_process_fase_5(&mut clipg, &joc_path, &conf_path);
     }
     fn test_full_process_fase_0(test_path: &PathBuf, conf_path: &PathBuf, joc_path: &PathBuf) -> CliPG {
         /*
@@ -597,6 +627,45 @@ hash = "acbbaa798a883fb0be7534092b20f5188fb07799a1c175c28f8fb1b03bc63ae2"
          * Tornem a sincronitzar i s'ha de actuialitzar el save1.txt local
          * i també el conf.toml amb el nou hash.
          */
+        // NO ha canviat res
+        clipg.api = Box::new(FakeAPI_fase1 {});
+        let result = clipg.sync_all(false);
+        assert_eq!(
+            result,
+            r#"
+* Joc:
+    ✔️ Partida OK: save1.txt
+"#
+        );
+        clipg.api = Box::new(FakeAPI_fase2 {});
+        // Ha canviat el save1.txt remot
+        let result = clipg.sync_all(false);
+        assert_eq!(
+            result,
+            r#"
+* Joc:
+    ⬇ Descarregar (remot modificat): save1.txt
+"#
+        );
+        // Revisem el contingut del conf.toml
+        let config_content = read_file_sync(conf_path.to_str().unwrap().to_string());
+        println!("{}", config_content);
+        assert_eq!(
+            config_content,
+            r#"[server]
+url = "http://localhost:8000"
+usuari = "admin"
+contrasenya = "admin"
+
+[[videojocs_habilitats.list]]
+nom = "Joc"
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc"
+
+[[videojocs_habilitats.list.partides_guardades]]
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save1.txt"
+hash = "3b136fcad41f6a8fb66b38cae89aaba00f30ac7f79797fcd8a46bc13a733811a"
+"#
+        );
     }
     fn test_full_process_fase_3(clipg: &mut CliPG, joc_path: &PathBuf, conf_path: &PathBuf) {
         /*
