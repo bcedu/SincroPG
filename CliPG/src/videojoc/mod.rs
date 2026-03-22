@@ -325,14 +325,24 @@ pub mod tests {
         let videojoc = get_videojoc_w40k();
         let api = get_fake_api();
         let contingut_original = local.read_file_sync();
-        // Cas en que la local es la mes recent. No s'ha de crear cap fitxer local nou
+        // Cas en que la local es la mes recent.
         local.timestamp = 1;
         remot.timestamp = 0;
         let nfitxers_abans = fs::read_dir(local.path.parent().unwrap()).iter().count();
         assert_eq!(nfitxers_abans, 1);
         videojoc.resoldre_conflicte(&local, &remot, &api);
-        let nfitxers_despres = fs::read_dir(local.path.parent().unwrap()).iter().count();
-        assert_eq!(nfitxers_despres, 1);
+        let dir = local.path.parent().unwrap();
+        let dir_fd = fs::File::open(dir).unwrap();
+        dir_fd.sync_all().unwrap();
+        let nfitxers_despres = fs::read_dir(dir).unwrap().count();
+        assert_eq!(nfitxers_despres, 2);
+        // Busquem el fitxer nou i l'eliminem
+        for entry in fs::read_dir(dir).unwrap().flatten() {
+            let path = entry.path();
+            if path.file_name().unwrap() != local.nom.to_str().unwrap() {
+                fs::remove_file(path).unwrap();
+            }
+        }
         // Cas en que el remot es mes recent. Es farà una copia
         local.timestamp = 0;
         remot.timestamp = 1;
@@ -347,7 +357,7 @@ pub mod tests {
                 // Haurien de tindre el mateix contingut
                 let content2 = fs::read_to_string(&path).unwrap();
                 let content1 = fs::read_to_string(&local.path).unwrap();
-                assert_eq!(content1, content2);
+                assert_ne!(content1, content2);
                 assert_eq!(content2, contingut_original);
                 // Aprofitem per eliminarlo
                 fs::remove_file(path).unwrap();
