@@ -116,7 +116,10 @@ impl CliPG {
             config = CliPgConfig::default();
             Self::save_config(&config, Some(cpath));
         } else {
-            let content = fs::read_to_string(&cpath).unwrap();
+            let mut content = String::new();
+            let mut f = File::open(&cpath).unwrap();
+            f.read_to_string(&mut content).unwrap();
+            drop(f);
             if content == "" {
                 config = CliPgConfig::default();
                 Self::save_config(&config, None);
@@ -139,6 +142,7 @@ impl CliPG {
         let toml = toml::to_string_pretty(config).unwrap();
         let mut f = File::create(&cpath).unwrap();
         f.write_all(toml.as_bytes()).unwrap();
+        f.sync_all().unwrap();
         drop(f);
     }
     fn load_local_jocs(&mut self) -> Vec<VideojocConfig> {
@@ -312,8 +316,8 @@ pub mod tests {
                 videojoc: "Joc".to_string(),
                 nom: OsString::from("save4.txt"),
                 path: path,
-                timestamp: 245528886,
-                hash: "aa".to_string(),
+                timestamp: 0,
+                hash: "12ee21760f19253fca62f5d0cdf480d1477c37300e56c2af141bcf35226a89b3".to_string(),
             };
             v.push(p1);
             v
@@ -322,6 +326,100 @@ pub mod tests {
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
             "save 4 alt 2".to_string()
+        }
+    }
+    pub struct FakeAPI_fase6 {
+        pub bck_name: String,
+    }
+    impl PartidesGuardadesAPI for FakeAPI_fase6 {
+        fn probar_connexio(&self) -> bool {
+            true
+        }
+        fn get_videojocs(&self) -> Vec<String> {
+            Vec::new()
+        }
+        fn get_partides_guardades(&self, _: &Videojoc) -> Vec<PartidaGuardada> {
+            let mut v = Vec::new();
+            let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync/Joc/save3.txt");
+            let p1 = PartidaGuardada {
+                videojoc: "Joc".to_string(),
+                nom: OsString::from("save3.txt"),
+                path: path,
+                timestamp: 245528886,
+                hash: "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4".to_string(),
+            };
+            v.push(p1);
+            let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync/Joc/save4.txt");
+            let p1 = PartidaGuardada {
+                videojoc: "Joc".to_string(),
+                nom: OsString::from("save4.txt"),
+                path: path,
+                timestamp: 999999999,
+                hash: "d623d87b3ef0b2b93f99637081a29ca70fa78c527f1f28a9242a7e93910fb194".to_string(),
+            };
+            v.push(p1);
+            let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(format!("tests/fixtures_cli_pg/test_sync/Joc/{}.txt", self.bck_name.clone()));
+            let p1 = PartidaGuardada {
+                videojoc: "Joc".to_string(),
+                nom: OsString::from(self.bck_name.clone()),
+                path: path,
+                timestamp: 999999999,
+                hash: "12ee21760f19253fca62f5d0cdf480d1477c37300e56c2af141bcf35226a89b3".to_string(),
+            };
+            v.push(p1);
+            v
+        }
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
+            "save 4 alt 2".to_string()
+        }
+    }
+    pub struct FakeAPI_fase7 {
+        pub bck_name: String,
+    }
+    impl PartidesGuardadesAPI for FakeAPI_fase7 {
+        fn probar_connexio(&self) -> bool {
+            true
+        }
+        fn get_videojocs(&self) -> Vec<String> {
+            Vec::new()
+        }
+        fn get_partides_guardades(&self, _: &Videojoc) -> Vec<PartidaGuardada> {
+            let mut v = Vec::new();
+            let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync/Joc/save3.txt");
+            let p1 = PartidaGuardada {
+                videojoc: "Joc".to_string(),
+                nom: OsString::from("save3.txt"),
+                path: path,
+                timestamp: 245528886,
+                hash: "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4".to_string(),
+            };
+            v.push(p1);
+            let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(format!("tests/fixtures_cli_pg/test_sync/Joc/{}.txt", self.bck_name.clone()));
+            let p1 = PartidaGuardada {
+                videojoc: "Joc".to_string(),
+                nom: OsString::from(self.bck_name.clone()),
+                path: path,
+                timestamp: 999999999,
+                hash: "12ee21760f19253fca62f5d0cdf480d1477c37300e56c2af141bcf35226a89b3".to_string(),
+            };
+            v.push(p1);
+            let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync/Joc/save4.txt");
+            let p1 = PartidaGuardada {
+                videojoc: "Joc".to_string(),
+                nom: OsString::from("save4.txt"),
+                path: path,
+                timestamp: 999999999,
+                hash: "patata".to_string(),
+            };
+            v.push(p1);
+            v
+        }
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
+            "save 4 alt 22222222".to_string()
         }
     }
     fn get_dummy_cli_pg() -> CliPG {
@@ -590,7 +688,9 @@ partides_guardades = []
         test_full_process_fase_2(&mut clipg, &joc_path, &conf_path);
         test_full_process_fase_3(&mut clipg, &joc_path, &conf_path);
         test_full_process_fase_4(&mut clipg, &joc_path, &conf_path);
-        test_full_process_fase_5(&mut clipg, &joc_path, &conf_path);
+        let back_file = test_full_process_fase_5(&mut clipg, &joc_path, &conf_path);
+        test_full_process_fase_6(&mut clipg, &joc_path, &conf_path, &back_file);
+        test_full_process_fase_7(&mut clipg, &joc_path, &conf_path, &back_file);
     }
     fn test_full_process_fase_0(test_path: &PathBuf, conf_path: &PathBuf, joc_path: &PathBuf) -> CliPG {
         /*
@@ -814,7 +914,7 @@ hash = "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4"
 "#
         );
     }
-    fn test_full_process_fase_5(clipg: &mut CliPG, joc_path: &PathBuf, conf_path: &PathBuf) {
+    fn test_full_process_fase_5(clipg: &mut CliPG, joc_path: &PathBuf, conf_path: &PathBuf) -> PathBuf {
         /*
          * PRE:
          * El fitxer de configuracio te habilitat "Joc" amb 1 partida (save3.txt).
@@ -824,7 +924,8 @@ hash = "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4"
          * Eliminaem el fitxer conf.toml.
          * Creem el save4.txt a local i remot. Sincronitzem:
          * EL save3.txt ha de seguir igual al tindre els amteixos hash.
-         * El save4.txt al tindre hash diferents en local i remot s'han de duplicar.
+         * El save4.txt al tindre hash diferents en local i remot -> s'han de duplicar.
+         * El que es renombra a "bck_" es el remot ja que te un timestamp més petit.
          */
         // Eliminem el fitxer conf.toml
         std::fs::remove_file(conf_path).unwrap();
@@ -844,20 +945,9 @@ hash = "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4"
         // Verifiquem el contingut del conf.toml
         let config_content = read_file_sync(conf_path.to_str().unwrap().to_string());
         assert!(config_content.contains(
-            r#"_save4.txt"
-"#
-        ));
-        assert!(config_content.contains(
-            r#"hash = "12ee21760f19253fca62f5d0cdf480d1477c37300e56c2af141bcf35226a89b3"
-"#
-        ));
-        assert!(config_content.contains(
             r#"[[videojocs_habilitats.list.partides_guardades]]
 path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save4.txt"
-"#
-        ));
-        assert!(config_content.contains(
-            r#"hash = "d623d87b3ef0b2b93f99637081a29ca70fa78c527f1f28a9242a7e93910fb194"
+hash = "d623d87b3ef0b2b93f99637081a29ca70fa78c527f1f28a9242a7e93910fb194"
 "#
         ));
         assert!(config_content.contains(
@@ -866,5 +956,142 @@ path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/tes
 hash = "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4"
 "#
         ));
+        // Verifiquem que s'ha creat el bck_save4.txt
+        let mut fitxer_trobat: Option<PathBuf> = None;
+        for entry in joc_path.read_dir().unwrap() {
+            let entry = entry.unwrap();
+            let file_name = entry.file_name();
+            let file_name = file_name.to_string_lossy();
+            if file_name.contains("bck_") {
+                fitxer_trobat = Some(entry.path());
+                break;
+            }
+        }
+        assert!(fitxer_trobat.is_some(), "No s'ha trobat cap fitxer 'bck_'");
+        let content = read_file_sync(fitxer_trobat.clone().unwrap().to_str().unwrap().to_string());
+        assert_eq!(content, "save 4 alt 2");
+        let back_name = fitxer_trobat.unwrap().clone();
+        let expect1 = format!(
+            r#"[[videojocs_habilitats.list.partides_guardades]]
+path = "{}"
+hash = "12ee21760f19253fca62f5d0cdf480d1477c37300e56c2af141bcf35226a89b3"
+"#,
+            back_name.to_str().unwrap()
+        );
+        assert!(config_content.contains(expect1.as_str()));
+        // si ho has de retornar:
+        back_name
+    }
+    fn test_full_process_fase_6(clipg: &mut CliPG, joc_path: &PathBuf, conf_path: &PathBuf, back_file: &PathBuf) {
+        /*
+         * PRE:
+         * El fitxer de configuracio te habilitat "Joc" amb 3 partides (save3.txt, save4.txt i "bck_save4.txt").
+         * En local tenim el save3.txt, el save4.txt i el bck_save4.txt a "Joc".
+         * En remot tenim el save3.txt i el save4.txt i el bck_save4.txt.
+         * POST:
+         * Fem una sincronitzacio que no fa res.
+         * Verifiquem que efectivament no ha cambiat res en el conf.toml
+         */
+        // Verifiquem que a joc_path hi ha 3 fitxers: save3.txt, save4.txt i bck_save4.txt
+        let bck_name = back_file.file_name().clone().unwrap();
+        assert!(joc_path.join("save3.txt").exists(), "save3.txt no existeix a joc_path");
+        assert!(joc_path.join("save4.txt").exists(), "save4.txt no existeix a joc_path");
+        assert!(bck_name.to_str().unwrap().contains("bck_"));
+        assert!(joc_path.join(bck_name.clone()).exists(), "bck_save4.txt no existeix a joc_path");
+        // Sincronitzem sense haver canviat res per asegurar que no passa res
+        clipg.api = Box::new(FakeAPI_fase6 {
+            bck_name: bck_name.clone().to_str().unwrap().to_string(),
+        });
+        let result = clipg.sync_all(false);
+        assert_eq!(
+            result,
+            format!(
+                r#"
+* Joc:
+    ✔ Partida OK: {}
+    ✔ Partida OK: save3.txt
+    ✔ Partida OK: save4.txt
+"#,
+                bck_name.to_str().unwrap()
+            ),
+        );
+        let config_content = read_file_sync(conf_path.to_str().unwrap().to_string());
+        // El back_save4 original
+        let expect1 = format!(
+            r#"[[videojocs_habilitats.list.partides_guardades]]
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/{}"
+hash = "12ee21760f19253fca62f5d0cdf480d1477c37300e56c2af141bcf35226a89b3"
+"#,
+            bck_name.to_str().unwrap()
+        );
+        assert!(config_content.contains(expect1.as_str()));
+        // El save3.txt original
+        assert!(config_content.contains(
+            r#"[[videojocs_habilitats.list.partides_guardades]]
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save3.txt"
+hash = "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4"
+"#
+        ));
+        // El save4.txt original
+        assert!(config_content.contains(
+            r#"[[videojocs_habilitats.list.partides_guardades]]
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save4.txt"
+hash = "d623d87b3ef0b2b93f99637081a29ca70fa78c527f1f28a9242a7e93910fb194"
+"#
+        ));
+    }
+    fn test_full_process_fase_7(clipg: &mut CliPG, joc_path: &PathBuf, conf_path: &PathBuf, back_file: &PathBuf) {
+        /*
+         * PRE:
+         * El fitxer de configuracio te habilitat "Joc" amb 3 partides (save3.txt, save4.txt i "bck_save4.txt").
+         * En local tenim el save3.txt, el save4.txt i el bck_save4.txt a "Joc".
+         * En remot tenim el save3.txt i el save4.txt i el bck_save4.txt.
+         * POST:
+         * Modifiquem el save4.txt a local i remot. Sincronitzem:
+         * EL save3.txt ha de seguir igual al tindre els amteixos hash.
+         * EL bck_save4.txt ha de seguir igual al tindre els amteixos hash.
+         * El save4.txt al tindre hash diferents en local i remot -> s'han de duplicar.
+         * El que es renombra a "bck_" es el local ja que te un timestamp més petit.
+         */
+        let bck_name = back_file.file_name().clone().unwrap();
+        // Modifiquem el save4.txt a local
+        let save4_path = joc_path.join("save4.txt");
+        std::fs::write(&save4_path, "44 save 44444").unwrap();
+        // Modifiquem el save4.txt a remot: retorna un hash diferent i un timestamp molt gran
+        clipg.api = Box::new(FakeAPI_fase7 {
+            bck_name: bck_name.clone().to_str().unwrap().to_string(),
+        });
+        let result = clipg.sync_all(false);
+        assert_eq!(
+            result,
+            format!(
+                r#"
+* Joc:
+    ✔ Partida OK: {}
+    ✔ Partida OK: save3.txt
+    ⚠ Conflicte: save4.txt
+"#,
+                bck_name.to_str().unwrap()
+            ),
+        );
+        // Verifiquem el contingut del conf.toml
+        let config_content = read_file_sync(conf_path.to_str().unwrap().to_string());
+        // El save3.txt original
+        assert!(config_content.contains(
+            r#"[[videojocs_habilitats.list.partides_guardades]]
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save3.txt"
+hash = "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4"
+"#
+        ));
+        // El bck_save4 original
+        let expect1 = format!(
+            r#"[[videojocs_habilitats.list.partides_guardades]]
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/{}"
+hash = "12ee21760f19253fca62f5d0cdf480d1477c37300e56c2af141bcf35226a89b3"
+"#,
+            bck_name.to_str().unwrap()
+        );
+        assert!(config_content.contains(expect1.as_str()));
+        // TOOD: el save4.txt i el nou bck_save4
     }
 }

@@ -5,7 +5,7 @@ use normalized_hash::Hasher;
 use std::ffi::OsString;
 use std::fs;
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::{self, Read, Write};
 use std::path::PathBuf;
 
 pub struct PartidaGuardada {
@@ -69,7 +69,10 @@ impl PartidaGuardada {
     pub fn duplicar_fitxer(&self, nou_nom: String) {
         let dir = self.path.parent().unwrap();
         let nou_path = dir.join(nou_nom);
-        fs::copy(&self.path, &nou_path).unwrap();
+        let mut origen = fs::File::open(&self.path).unwrap();
+        let mut desti = fs::File::create(&nou_path).unwrap();
+        io::copy(&mut origen, &mut desti).unwrap();
+        desti.sync_all().unwrap();
     }
     pub fn eliminar_partida_guardada(&self) {
         fs::remove_file(&self.path).unwrap();

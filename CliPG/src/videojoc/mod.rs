@@ -135,7 +135,7 @@ impl Videojoc {
                 }
                 _ => continue,
             };
-            print!("{}", msg);
+            //print!("{}", msg);
             resultat.push_str(&msg);
         }
         self.actualitzar_partides_guardades();
@@ -159,7 +159,13 @@ impl Videojoc {
     pub fn resoldre_conflicte(&self, local: &PartidaGuardada, remot: &PartidaGuardada, api: &Box<dyn PartidesGuardadesAPI>) {
         // Donarem prioritat al que tingui el timestamp mes recent. El que tingui el timestamp
         // mes antic es renombara posant a davant del nom "bck_yyyymmddhhss_"
-        let nou_nom = format!("bck_{0}_{1}", Local::now().format("%Y%m%d%H%M%S"), remot.nom.to_str().unwrap());
+        let nou_nom = format!(
+            "bck_{0}_{1}",
+            Local::now()
+                .format("%Y%m%d%H%M%S%9f") // nanosegons
+                .to_string(),
+            remot.nom.to_str().unwrap()
+        );
         if local.timestamp >= remot.timestamp {
             // Pujem la partida remot pero renombrada al servidor;
             let mut remot = PartidaGuardada::from_partida_guardada(remot);
