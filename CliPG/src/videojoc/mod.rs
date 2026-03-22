@@ -347,7 +347,7 @@ pub mod tests {
                 // Haurien de tindre el mateix contingut
                 let content2 = fs::read_to_string(&path).unwrap();
                 let content1 = fs::read_to_string(&local.path).unwrap();
-                assert_ne!(content1, content2);
+                assert_eq!(content1, content2);
                 assert_eq!(content2, contingut_original);
                 // Aprofitem per eliminarlo
                 fs::remove_file(path).unwrap();
