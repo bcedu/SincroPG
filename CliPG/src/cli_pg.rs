@@ -1092,6 +1092,16 @@ hash = "12ee21760f19253fca62f5d0cdf480d1477c37300e56c2af141bcf35226a89b3"
             bck_name.to_str().unwrap()
         );
         assert!(config_content.contains(expect1.as_str()));
-        // TOOD: el save4.txt i el nou bck_save4
+        // El save4.txt te un hash diferent, ja que es el nou
+        let expect2 = format!(
+            r#"[[videojocs_habilitats.list.partides_guardades]]
+path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save4.txt"
+hash = "d163dc016eb3e5640cd2b9e8a5364c35cf6faf3a9b7f7b0c53bdef37dca31d74"
+"#,
+        );
+        assert!(config_content.contains(expect2.as_str()));
+        // El altre fitxer bck_ te un altre hash
+        let expect3 = format!(r#"hash = "39b8270f6c2bceb8824a7525d0cfc6daed0b521cb2a25b25932eedee6249e2f4""#);
+        assert!(config_content.contains(expect3.as_str()));
     }
 }
