@@ -29,5 +29,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            CliPG/target/release/*
-            SerPG/target/release/*
+            CliPG/target/release/CliPG
+            SerPG/target/release/SerPG
