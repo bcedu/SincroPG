@@ -1,0 +1,25 @@
+name: Build Rust Apps on Tag
+
+on:
+  push:
+    tags:
+      - 'v*'   # Pots ajustar el patró si vols (ex: v1.0.0)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build CliPG
+        working-directory: ./CliPG
+        run: cargo build --release
+
+      - name: Build SerPG
+        working-directory: ./SerPG
+        run: cargo build --release
