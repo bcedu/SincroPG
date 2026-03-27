@@ -3,7 +3,10 @@ name: Build & Release
 on:
   push:
     tags:
-      - '*'   # qualsevol tag
+      - '*'
+
+permissions:
+  contents: write
 
 jobs:
   release:
@@ -28,5 +31,3 @@ jobs:
           files: |
             CliPG/target/release/*
             SerPG/target/release/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
