@@ -1,20 +1,18 @@
-name: Build Rust Apps on Tag
+name: Build & Release
 
 on:
   push:
     tags:
-      - 'v*'   # Pots ajustar el patró si vols (ex: v1.0.0)
+      - '*'   # qualsevol tag
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@stable
 
       - name: Build CliPG
         working-directory: ./CliPG
@@ -23,3 +21,12 @@ jobs:
       - name: Build SerPG
         working-directory: ./SerPG
         run: cargo build --release
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            CliPG/target/release/*
+            SerPG/target/release/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
