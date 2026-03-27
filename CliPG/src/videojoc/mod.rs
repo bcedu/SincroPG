@@ -170,8 +170,8 @@ impl Videojoc {
             // Pujem la partida remot pero renombrada al servidor;
             let mut remot = PartidaGuardada::from_partida_guardada(remot);
             remot.nom = OsString::from(nou_nom.clone());
-            remot.path.set_file_name(nou_nom);
             api.post_partida_guardada(&remot);
+            remot.path.set_file_name(nou_nom);
             // La guardem en local tambe
             remot.descarregar_partida_guardada(api);
             // Pujem la partida local al servidor (aixo sobreescriu la que hi havia)

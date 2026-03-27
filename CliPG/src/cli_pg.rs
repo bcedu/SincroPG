@@ -232,7 +232,9 @@ pub mod tests {
             v.push(p1);
             v
         }
-        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {
+            PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
+        }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
             "Pastanaga bullida@".to_string()
@@ -259,7 +261,9 @@ pub mod tests {
             v.push(p1);
             v
         }
-        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {
+            PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
+        }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
             "Pastanaga bullida@2 la venganza".to_string()
@@ -286,7 +290,9 @@ pub mod tests {
             v.push(p1);
             v
         }
-        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {
+            PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
+        }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
             "Pastanaga bullida@ 3 sl retrno".to_string()
@@ -322,7 +328,9 @@ pub mod tests {
             v.push(p1);
             v
         }
-        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {
+            PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
+        }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
             "save 4 alt 2".to_string()
@@ -369,7 +377,9 @@ pub mod tests {
             v.push(p1);
             v
         }
-        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {
+            PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
+        }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
             "save 4 alt 2".to_string()
@@ -416,7 +426,9 @@ pub mod tests {
             v.push(p1);
             v
         }
-        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {
+            PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
+        }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
             "save 4 alt 22222222".to_string()

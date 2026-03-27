@@ -39,7 +39,7 @@ struct PartidaGuardadaAPI {
     hash: String,
 }
 #[derive(Debug, Deserialize, Serialize)]
-struct PartidaGuardadaContingutAPI {
+pub struct PartidaGuardadaContingutAPI {
     nom: String,
     contingut: String,
 }
@@ -93,6 +93,25 @@ impl PgAPI {
         }
         response.unwrap()
     }
+    pub fn _post_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> PartidaGuardadaContingutAPI {
+        if partida_guardada.videojoc.is_empty() {
+            panic!("No es pot pujar la partida {} si no te el videojoc definit.", partida_guardada.nom.to_str().unwrap());
+        }
+        let content = partida_guardada.read_file_sync();
+        let pa = PartidaGuardadaContingutAPI {
+            nom: partida_guardada.nom.to_str().unwrap().to_string(),
+            contingut: content,
+        };
+        pa
+    }
+    pub fn _get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
+        // GET /api/v1/videojocs/{videojoc_id}/partides/{partida_id}/contingut
+        if partida_guardada.videojoc.is_empty() {
+            panic!("No es pot descarregar la partida {} si no te el videojoc definit.", partida_guardada.nom.to_str().unwrap());
+        }
+        let request_url = format!("videojocs/{}/partides/{}/contingut", partida_guardada.videojoc, partida_guardada.nom.to_str().unwrap());
+        request_url
+    }
 }
 
 impl PartidesGuardadesAPI for PgAPI {
@@ -127,23 +146,13 @@ impl PartidesGuardadesAPI for PgAPI {
     }
     fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {
         // POST /api/v1/videojocs/{videojoc_id}/partides
-        if partida_guardada.videojoc.is_empty() {
-            panic!("No es pot pujar la partida {} si no te el videojoc definit.", partida_guardada.nom.to_str().unwrap());
-        }
+        let pa = self._post_partida_guardada(partida_guardada);
         let request_url = format!("videojocs/{}/partides", partida_guardada.videojoc);
-        let content = partida_guardada.read_file_sync();
-        let pa = PartidaGuardadaContingutAPI {
-            nom: partida_guardada.nom.to_str().unwrap().to_string(),
-            contingut: content,
-        };
         self.make_post_request(request_url.as_str(), pa);
     }
     fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
         // GET /api/v1/videojocs/{videojoc_id}/partides/{partida_id}/contingut
-        if partida_guardada.videojoc.is_empty() {
-            panic!("No es pot descarregar la partida {} si no te el videojoc definit.", partida_guardada.nom.to_str().unwrap());
-        }
-        let request_url = format!("videojocs/{}/partides/{}/contingut", partida_guardada.videojoc, partida_guardada.nom.to_str().unwrap());
+        let request_url = self._get_partida_guardada(partida_guardada);
         let pg: PartidaGuardadaContingutAPI = self.make_get_request(request_url.as_str()).json().unwrap();
         pg.contingut
     }
