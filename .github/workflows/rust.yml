@@ -1,9 +1,9 @@
-name: Build & Release
+name: Build & Release (Static Linux)
 
 on:
   push:
     tags:
-      - '*'   # qualsevol tag
+      - '*'
 
 permissions:
   contents: write
@@ -19,17 +19,23 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Build CliPG
-        working-directory: ./CliPG
-        run: cargo build --release
+      - name: Add musl target
+        run: rustup target add x86_64-unknown-linux-musl
 
-      - name: Build SerPG
+      - name: Install musl tools
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - name: Build CliPG (static)
+        working-directory: ./CliPG
+        run: cargo build --release --target x86_64-unknown-linux-musl
+
+      - name: Build SerPG (static)
         working-directory: ./SerPG
-        run: cargo build --release
+        run: cargo build --release --target x86_64-unknown-linux-musl
 
       - name: Create GitHub Release and upload executables
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ./CliPG/target/release/CliPG
-            ./SerPG/target/release/SerPG
+            ./CliPG/target/x86_64-unknown-linux-musl/release/CliPG
+            ./SerPG/target/x86_64-unknown-linux-musl/release/SerPG
