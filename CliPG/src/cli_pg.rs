@@ -187,7 +187,9 @@ impl CliPG {
                 partides_guardades: updated_v.get_partides_guardades_list(),
             });
         }
-        Self::save_config(&new_config, Some(PathBuf::from(self.config_path.clone())));
+        if !test_mode {
+            Self::save_config(&new_config, Some(PathBuf::from(self.config_path.clone())));
+        }
         self.config = new_config;
         res.to_string()
     }
