@@ -3,7 +3,7 @@ name: Build & Release
 on:
   push:
     tags:
-      - '*'
+      - '*'   # qualsevol tag
 
 permissions:
   contents: write
@@ -13,9 +13,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Build CliPG
         working-directory: ./CliPG
@@ -25,9 +27,9 @@ jobs:
         working-directory: ./SerPG
         run: cargo build --release
 
-      - name: Create Release
+      - name: Create GitHub Release and upload executables
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            CliPG/target/release/CliPG
-            SerPG/target/release/SerPG
+            ./CliPG/target/release/CliPG
+            ./SerPG/target/release/SerPG
