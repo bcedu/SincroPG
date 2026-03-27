@@ -28,8 +28,9 @@ impl PartidaGuardada {
             hash = "".to_string();
             timestamp = 0;
         }
+        let videojoc = full_path.parent().unwrap().file_name().unwrap().to_str().unwrap().to_string();
         PartidaGuardada {
-            videojoc: "".to_string(),
+            videojoc: videojoc,
             nom: full_path.file_name().unwrap_or_else(|| panic!("La ruta {path} no és correcte!")).to_os_string(),
             hash: hash,
             path: full_path,
@@ -38,7 +39,7 @@ impl PartidaGuardada {
     }
     pub fn from_partida_guardada(partida_guardada: &PartidaGuardada) -> Self {
         PartidaGuardada {
-            videojoc: "".to_string(),
+            videojoc: partida_guardada.videojoc.clone(),
             nom: partida_guardada.nom.clone(),
             hash: partida_guardada.hash.clone(),
             path: PathBuf::from(partida_guardada.path.to_str().unwrap()),
@@ -130,6 +131,7 @@ pub mod tests {
     fn test_new() {
         let test_file_path = get_partida_path_w40k_s1();
         let pg = get_partida_w40k_s1();
+        assert_eq!(pg.videojoc, "Total War 40k");
         assert_eq!(pg.nom, "save1.txt");
         assert_eq!(pg.timestamp, 288718000);
         assert_eq!(pg.hash, "02d47a22e09f46731a58dbe7cb299c0315c6760aec7557e8ca6e87090fc85dfd");

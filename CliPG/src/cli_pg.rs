@@ -180,7 +180,7 @@ impl CliPG {
         for v in self.vjocs.iter() {
             let mut updated_v = Videojoc::from(v);
             let joc_res = self.sync_joc(&mut updated_v, test_mode);
-            res.push_str(&format!("{}\n{}", res.clone(), joc_res.as_str()));
+            res.push_str(&format!("\n{}", joc_res.as_str()));
             new_config.videojocs_habilitats.list.push(VideojocConfig {
                 nom: updated_v.nom.to_str().unwrap().to_string().clone(),
                 path: updated_v.local_folder.to_str().unwrap().to_string().clone(),
