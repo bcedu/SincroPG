@@ -83,12 +83,14 @@ impl SerPG {
         }
     }
     async fn test(AuthBasic((user, pass)): AuthBasic) -> Result<&'static str, StatusCode> {
+        println!("GET /api/v1/test");
         Ok("OK")
     }
     async fn get_videojocs(
         AuthBasic((user, pass)): AuthBasic,
         State(spg_state): State<SerPGState>,
     ) -> Result<Json<Vec<VideojocAPI>>, StatusCode> {
+        println!("GET /api/v1/videojocs");
         Self::check_auth(user, pass, &spg_state)?;
         let mut videojocs_list = Vec::new();
         for path in fs::read_dir(spg_state.videojocs_path).unwrap() {
@@ -105,6 +107,7 @@ impl SerPG {
         State(spg_state): State<SerPGState>,
         Path(videojoc_id): Path<String>,
     ) -> Result<Json<Vec<PartidaGuardadaAPI>>, StatusCode> {
+        println!("GET /api/v1/videojocs/{videojoc_id}/partides");
         Self::check_auth(user, pass, &spg_state)?;
         let mut partides_list = Vec::new();
         let videojoc_path = format!("{}/{}", spg_state.videojocs_path, videojoc_id);
@@ -128,6 +131,7 @@ impl SerPG {
         State(spg_state): State<SerPGState>,
         Path((videojoc_id, partida_id)): Path<(String, String)>,
     ) -> Result<Json<PartidaGuardadaContingutAPI>, StatusCode> {
+        println!("GET /api/v1/videojocs/{videojoc_id}/partides/{partida_id}/contingut");
         Self::check_auth(user, pass, &spg_state)?;
         let partida_path = format!(
             "{}/{}/{}",
@@ -147,6 +151,7 @@ impl SerPG {
         State(spg_state): State<SerPGState>,
         Path((videojoc_id, partida_id)): Path<(String, String)>,
     ) -> Result<(), StatusCode> {
+        println!("DELETE /api/v1/videojocs/{videojoc_id}/partides/{partida_id}");
         Self::check_auth(user, pass, &spg_state)?;
         let partida_path = format!(
             "{}/{}/{}",
@@ -163,6 +168,7 @@ impl SerPG {
         Path(videojoc_id): Path<String>,
         Json(partida_nova): Json<PartidaGuardadaContingutAPI>,
     ) -> Result<(), StatusCode> {
+        println!("POST /api/v1/videojocs/{videojoc_id}/partides");
         Self::check_auth(user, pass, &spg_state)?;
         let partida_path = format!(
             "{}/{}/{}",
