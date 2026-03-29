@@ -150,81 +150,117 @@
 
 Per la UI es farà servir `egui`.
 
-### 2.1 Inici de l’aplicació
+### Dashboard — SincroPG
 
-```
-CliPG s'inicia
- ↓
-S'obre MainWindow
- ↓
-Intent automàtic de connexió amb SPG
-```
+┌──────────────────────────────────────────────────────────────┐
+│ SincroPG                                      [⚙ Configuració] │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  [+ Afegir joc]                         [⟳ Sincronitzar tots] │
+│                                                              │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  🎮 Videojocs habilitats                                    │
+│                                                              │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │ Nom del joc    │ Estat        │ Última sinc. │ Accions │  │
+│  ├────────────────────────────────────────────────────────┤  │
+│  │ Skyrim         │ 🟢 Actualitzat │ 29/03 18:20 │ [Sync] [✏] [🗑] │
+│  │ Baldurs Gate   │ 🟡 Desfasat    │ 28/03 21:10 │ [Sync] [✏] [🗑] │
+│  │ Elden Ring     │ 🔴 Error       │ 27/03 12:05 │ [Sync] [✏] [🗑] │
+│  └────────────────────────────────────────────────────────┘  │
+│                                                              │
+│  (Si no hi ha jocs)                                          │
+│      No hi ha videojocs configurats.                         │
+│      Prem "+ Afegir joc" per començar.                       │
+│                                                              │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Estat servidor: 🟢 Connectat (192.168.1.10:8080)            │
+│                                                              │
+│  Activitat:                                                  │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │ ✔ Skyrim sincronitzat correctament                    │  │
+│  │ ✖ Error a Elden Ring: No es pot accedir a la ruta    │  │
+│  └────────────────────────────────────────────────────────┘  │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+### Afegir / Editar Joc
 
-### 2.2 Sense connexió amb el servidor
+┌──────────────────────────────────────────────────────────────┐
+│ ← Tornar                                                     │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Nom del joc:                                                │
+│  [________________________________________________________]  │
+│                                                              │
+│  Ruta local de la partida:                                   │
+│  [____________________________________________________] [📂] │
+│                                                              │
+│  Carpeta al servidor (opcional):                             │
+│  [________________________________________________________]  │
+│                                                              │
+│  Opcions avançades:                                          │
+│  ☐ Sincronitzar automàticament                               │
+│  ☐ Només pujar fitxers (no baixar)                           │
+│                                                              │
+│                                                              │
+│                    [Guardar]   [Cancel·lar]                   │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+### Configuració
 
-- Missatge:
-    - ❌ No es pot connectar amb el servidor
-- Botó:
-    - Configurar servidor
+┌──────────────────────────────────────────────────────────────┐
+│ ← Tornar                                                     │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  🌐 Configuració del Servidor                               │
+│                                                              │
+│  Host / IP:                                                  │
+│  [__________________________________________]                │
+│                                                              │
+│  Port:                                                        │
+│  [________]                                                  │
+│                                                              │
+│  Usuari:                                                      │
+│  [__________________________________________]                │
+│                                                              │
+│  Contrasenya:                                                 │
+│  [__________________________________________]                │
+│                                                              │
+│  [Provar connexió]                                            │
+│                                                              │
+│  Estat connexió:                                              │
+│  🟢 Connexió correcta                                         │
+│  🔴 Error de connexió                                         │
+│                                                              │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  🔄 Opcions generals                                          │
+│                                                              │
+│  ☐ Sincronitzar en iniciar l'aplicació                       │
+│  ☐ Sincronitzar automàticament cada ___ minuts               │
+│  ☐ Mostrar notificacions                                      │
+│                                                              │
+│                                                              │
+│                    [Guardar canvis]                           │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+### Sincronització en curs
 
-```
-[ MainWindow ]
-┌──────────────────────────────┐
-│ ❌ Sense connexió amb SPG     │
-│                              │
-│ [ Configurar servidor ]      │
-└──────────────────────────────┘
-```
-
----
-
-### 2.3 Finestra de configuració del servidor
-
-Dades configurables:
-- URL del servidor SPG
-- Usuari
-- Contrasenya
-
-```
-[ ServerConfigWindow ]
-┌──────────────────────────────┐
-│ Servidor:  https://...       │
-│ Usuari:    __________       │
-│ Password:  *********        │
-│                              │
-│ [ Provar ]   [ Desar ]       │
-└──────────────────────────────┘
-```
-
----
-
-### 2.4 Connexió correcta
-
-```
-Connexió OK
- ↓
-Obtenir jocs habilitats
- ↓
-Mostrar jocs
- ↓
-Iniciar sincronització
-```
-
-```
-[ MainWindow ]
-┌────────────────────────────────────────┐
-│ Connexió: ✅                            │
-│                                        │
-│ Joc              Estat                 │
-│ ------------------------------------- │
-│ Skyrim           🔄 Sincronitzant...   │
-│ Baldur's Gate    ✅ OK                 │
-│ Witcher 3        ⚠ Conflicte           │
-│                                        │
-│ [ Forçar sync ]  [ Config joc ]        │
-└────────────────────────────────────────┘
-```
-
+┌──────────────────────────────────────────────┐
+│ Sincronitzant Baldurs Gate...               │
+├──────────────────────────────────────────────┤
+│                                              │
+│  [██████████████░░░░░░░░░] 65%              │
+│                                              │
+│  ✔ Comparant fitxers                        │
+│  ✔ Pujant 3 fitxers                         │
+│  ⟳ Baixant 1 fitxer                         │
+│                                              │
+│                     [Cancel·lar]            │
+│                                              │
+└──────────────────────────────────────────────┘
 ---
 
 ## 3. Lògica de sincronització
