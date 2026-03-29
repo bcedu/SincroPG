@@ -1,5 +1,5 @@
 use CliPG::cli_pg::CliPG as CliPG_class;
-use CliPG::pg_gui::PgGUI;
+use CliPG::pg_gui::start_pg_gui;
 use clap::{Arg, Command};
 
 fn main() {
@@ -55,7 +55,7 @@ fn main() {
         .get_matches();
 
     if matches.get_flag("gui") {
-        PgGUI::new(None).start();
+        start_pg_gui(None);
     } else {
         let mut clipg = CliPG_class::default(None);
         if matches.get_flag("list") {

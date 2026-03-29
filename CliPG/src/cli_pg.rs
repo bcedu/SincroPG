@@ -1,7 +1,6 @@
 use crate::pg_api::*;
 use crate::videojoc::*;
 use directories::ProjectDirs;
-use eframe::egui;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::fs::File;
@@ -192,14 +191,6 @@ impl CliPG {
         }
         self.config = new_config;
         res.to_string()
-    }
-}
-
-impl eframe::App for CliPG {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("CliPG");
-        });
     }
 }
 
