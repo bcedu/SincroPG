@@ -4,4 +4,9 @@
     "command": "RUST_BACKTRACE=1 cargo",
     "args": ["test", "--package", "CliPG", "--", "--test-threads=1"],
   },
+  {
+    "label": "CliPG run GUI",
+    "command": "RUST_BACKTRACE=1 cargo",
+    "args": ["run", "--", "--gui"],
+  },
 ]

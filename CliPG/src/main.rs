@@ -1,19 +1,8 @@
-use CliPG::cli_pg::CliPG;
+use CliPG::cli_pg::CliPG as CliPG_class;
+use CliPG::pg_gui::PgGUI;
 use clap::{Arg, Command};
 
 fn main() {
-    /*
-    let mut clipg = CliPG::default();
-    let res = clipg.sync_all(false);
-    */
-    /*
-    let options = eframe::NativeOptions::default();
-    eframe::run_native(
-        "CliPG",
-        options,
-        Box::new(|_cc| Ok(Box::new(CliPG::default()))),
-    )
-    */
     let matches = Command::new("CliPG")
         .version("1.0")
         .author("Bcedu")
@@ -24,6 +13,13 @@ fn main() {
                 .short('l')
                 .long("list")
                 .help("Mostra tots els videojocs habilitats per sincornitzar-se")
+                .action(clap::ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new("gui")
+                .short('g')
+                .long("gui")
+                .help("Inicia l'aplicacio amb interfície gràfica")
                 .action(clap::ArgAction::SetTrue),
         )
         .arg(
@@ -58,28 +54,28 @@ fn main() {
         )
         .get_matches();
 
-    let mut clipg = CliPG::default(None);
-    if matches.get_flag("list") {
-        for v in clipg.config.videojocs_habilitats.list.iter() {
-            println!("* {}\n    -> {}\n", v.nom, v.path);
+    if matches.get_flag("gui") {
+        PgGUI::new(None).start();
+    } else {
+        let mut clipg = CliPG_class::default(None);
+        if matches.get_flag("list") {
+            for v in clipg.config.videojocs_habilitats.list.iter() {
+                println!("* {}\n    -> {}\n", v.nom, v.path);
+            }
+        } else if let Some(path) = matches.get_one::<String>("add") {
+            let res = clipg.afegir_joc(path.to_string());
+            res.unwrap_or_else(|err| println!("{err}"));
+        } else if let Some(videojoc) = matches.get_one::<String>("remove") {
+            let res = clipg.eliminar_joc(videojoc.to_string());
+            res.unwrap_or_else(|err| println!("{err}"));
+        } else if matches.get_flag("sync_all") {
+            println!("Sincronitzant tots els videojocs...");
+            let res = clipg.sync_all(false);
+            println!("{res}");
+        } else if matches.get_flag("sync_all_test") {
+            println!("Sincronitzant tots els videojocs (test mode)...");
+            let res = clipg.sync_all(true);
+            println!("{res}");
         }
-    }
-    if let Some(path) = matches.get_one::<String>("add") {
-        let res = clipg.afegir_joc(path.to_string());
-        res.unwrap_or_else(|err| println!("{err}"));
-    }
-    if let Some(videojoc) = matches.get_one::<String>("remove") {
-        let res = clipg.eliminar_joc(videojoc.to_string());
-        res.unwrap_or_else(|err| println!("{err}"));
-    }
-    if matches.get_flag("sync_all") {
-        println!("Sincronitzant tots els videojocs...");
-        let res = clipg.sync_all(false);
-        println!("{res}");
-    }
-    if matches.get_flag("sync_all_test") {
-        println!("Sincronitzant tots els videojocs (test mode)...");
-        let res = clipg.sync_all(true);
-        println!("{res}");
     }
 }
