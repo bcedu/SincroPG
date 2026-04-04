@@ -19,7 +19,7 @@ pub trait PartidesGuardadesAPI {
 }
 
 pub struct PgAPI {
-    url: String,
+    pub url: String,
     usuari: String,
     contrassenya: String,
     client: reqwest::blocking::Client,

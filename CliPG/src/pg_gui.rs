@@ -1,6 +1,5 @@
 use crate::cli_pg::CliPG;
 use eframe::egui;
-use egui::Vec2;
 use std::path::PathBuf;
 
 pub fn start_pg_gui(clipg_config_path: Option<PathBuf>) -> Result<(), eframe::Error> {
@@ -17,16 +16,36 @@ enum AppMode {
 pub struct PgGUI {
     clipg_config_path: Option<PathBuf>,
     current_mode: AppMode,
+    estat_servidor: String,
+    activitat: String,
 }
 impl Default for PgGUI {
     fn default() -> Self {
         Self {
             clipg_config_path: None,
             current_mode: AppMode::Dashboard,
+            estat_servidor: String::new(),
+            activitat: String::new(),
         }
     }
 }
 impl PgGUI {
+    fn get_estat_servidor(&mut self) -> String {
+        if self.estat_servidor.is_empty() {
+            let clipg = CliPG::default(self.clipg_config_path.clone());
+            let conectat = if clipg.api.probar_connexio() { "✔ Conectat" } else { "❌ Desconectat" };
+            self.estat_servidor = format!("{} ({})", conectat, clipg.config.server.url,);
+        }
+        self.estat_servidor.clone()
+    }
+    fn get_activitat(&mut self) -> String {
+        self.activitat.clone()
+    }
+    fn sincronitzar_tots(&mut self) {
+        let mut clipg = CliPG::default(self.clipg_config_path.clone());
+        let res = clipg.sync_all(false);
+        self.activitat = res;
+    }
     fn setup_top_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         egui::menu::bar(ui, |ui| {
             ui.menu_button("Fitxer", |ui| {
@@ -45,47 +64,64 @@ impl PgGUI {
         });
     }
     fn setup_dashboard(&mut self, centered_ui: &mut egui::Ui) {
-        self.setup_dashboard_grup_accions_videojocs_habilitats(centered_ui);
         self.setup_dashboard_videojocs_habilitats(centered_ui);
-    }
-    fn setup_dashboard_grup_accions_videojocs_habilitats(&mut self, centered_ui: &mut egui::Ui) {
-        egui::Frame::group(centered_ui.style()).show(centered_ui, |group_ui| {
-            group_ui.horizontal(|ui| {
-                // Botó esquerra
-                if ui.button("Esquerra").clicked() {
-                    // acció
-                }
-
-                // Ui flexible central
-                let available = ui.available_width();
-                ui.allocate_ui(Vec2::new(available, 0.0), |ui| {
-                    ui.horizontal_centered(|ui| {
-                        ui.label("🎮 Títol centrat");
-                    });
-                });
-
-                // Botó dret
-                if ui.button("Dreta").clicked() {
-                    // acció
-                }
-            });
-        });
+        self.setup_dashboard_servidor_status(centered_ui);
+        self.setup_dashboard_activitat(centered_ui);
     }
     fn setup_dashboard_videojocs_habilitats(&mut self, centered_ui: &mut egui::Ui) {
+        centered_ui.add_space(10.0);
         egui::Frame::group(centered_ui.style()).show(centered_ui, |group_ui| {
             egui::ScrollArea::vertical().show(group_ui, |scroll_ui| {
                 scroll_ui.heading("🎮 Videojocs habilitats");
+                scroll_ui.add_space(10.0);
+                scroll_ui.horizontal(|row_ui| {
+                    if row_ui.button("+ Afegir joc").clicked() {
+                        // TODO
+                    }
+                    row_ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |right_ui| {
+                        if right_ui.button("🔄 Sincronitzar tots").clicked() {
+                            self.sincronitzar_tots();
+                        }
+                    });
+                });
                 scroll_ui.add_space(10.0);
                 let mut clipg = CliPG::default(self.clipg_config_path.clone());
                 clipg.load_local_jocs();
                 for joc in clipg.vjocs.iter() {
                     scroll_ui.horizontal(|row_ui| {
                         row_ui.label(joc.nom.clone().to_str().unwrap());
-                        if row_ui.button("⟳ Sincronitzar").clicked() {}
-                        if row_ui.button("🗑 Eliminar").clicked() {}
+                        row_ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |right_ui| {
+                            if right_ui.button("🗑 Eliminar").clicked() {
+                                // TODO
+                            }
+                            if right_ui.button("🔄 Sincronitzar").clicked() {
+                                // TODO
+                            }
+                        });
                     });
                     scroll_ui.separator();
                 }
+            });
+        });
+    }
+    fn setup_dashboard_servidor_status(&mut self, centered_ui: &mut egui::Ui) {
+        centered_ui.add_space(10.0);
+        egui::Frame::group(centered_ui.style()).show(centered_ui, |group_ui| {
+            group_ui.label(format!("Estat servidor: {}", self.get_estat_servidor()));
+        });
+    }
+    fn setup_dashboard_activitat(&mut self, centered_ui: &mut egui::Ui) {
+        centered_ui.add_space(10.0);
+        egui::Frame::group(centered_ui.style()).show(centered_ui, |group_ui| {
+            group_ui.vertical_centered_justified(|vertical_ui| {
+                vertical_ui.vertical(|ui| {
+                    egui::ScrollArea::vertical().auto_shrink([false, true]).show(ui, |scroll_ui| {
+                        let res = self.get_activitat();
+                        for line in res.split("\n") {
+                            scroll_ui.label(line);
+                        }
+                    });
+                });
             });
         });
     }
