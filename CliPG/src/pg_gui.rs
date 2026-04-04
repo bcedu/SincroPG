@@ -1,5 +1,6 @@
-use crate::cli_pg::*;
+use crate::cli_pg::CliPG;
 use eframe::egui;
+use egui::Vec2;
 use std::path::PathBuf;
 
 pub fn start_pg_gui(clipg_config_path: Option<PathBuf>) -> Result<(), eframe::Error> {
@@ -43,51 +44,81 @@ impl PgGUI {
             });
         });
     }
-    fn setup_dashboard(&mut self, ui: &mut egui::Ui) {
-        ui.vertical_centered(|ui| {
-            ui.heading("VIEW DASHBOARD");
+    fn setup_dashboard(&mut self, centered_ui: &mut egui::Ui) {
+        self.setup_dashboard_grup_accions_videojocs_habilitats(centered_ui);
+        self.setup_dashboard_videojocs_habilitats(centered_ui);
+    }
+    fn setup_dashboard_grup_accions_videojocs_habilitats(&mut self, centered_ui: &mut egui::Ui) {
+        egui::Frame::group(centered_ui.style()).show(centered_ui, |group_ui| {
+            group_ui.horizontal(|ui| {
+                // Botó esquerra
+                if ui.button("Esquerra").clicked() {
+                    // acció
+                }
+
+                // Ui flexible central
+                let available = ui.available_width();
+                ui.allocate_ui(Vec2::new(available, 0.0), |ui| {
+                    ui.horizontal_centered(|ui| {
+                        ui.label("🎮 Títol centrat");
+                    });
+                });
+
+                // Botó dret
+                if ui.button("Dreta").clicked() {
+                    // acció
+                }
+            });
         });
     }
-    fn setup_configuracio(&mut self, ui: &mut egui::Ui) {
-        ui.vertical_centered(|ui| {
-            ui.heading("VIEW CONFIGURACIO");
+    fn setup_dashboard_videojocs_habilitats(&mut self, centered_ui: &mut egui::Ui) {
+        egui::Frame::group(centered_ui.style()).show(centered_ui, |group_ui| {
+            egui::ScrollArea::vertical().show(group_ui, |scroll_ui| {
+                scroll_ui.heading("🎮 Videojocs habilitats");
+                scroll_ui.add_space(10.0);
+                let mut clipg = CliPG::default(self.clipg_config_path.clone());
+                clipg.load_local_jocs();
+                for joc in clipg.vjocs.iter() {
+                    scroll_ui.horizontal(|row_ui| {
+                        row_ui.label(joc.nom.clone().to_str().unwrap());
+                        if row_ui.button("⟳ Sincronitzar").clicked() {}
+                        if row_ui.button("🗑 Eliminar").clicked() {}
+                    });
+                    scroll_ui.separator();
+                }
+            });
         });
     }
-    fn setup_editar_joc(&mut self, ui: &mut egui::Ui) {
-        ui.vertical_centered(|ui| {
-            ui.heading("VIEW EDITAR JOC");
-        });
-    }
-    fn setup_sincronitzacio(&mut self, ui: &mut egui::Ui) {
-        ui.vertical_centered(|ui| {
-            ui.heading("VIEW SINCRONITZACIÓ");
-        });
-    }
+    fn setup_configuracio(&mut self, centered_ui: &mut egui::Ui) {}
+    fn setup_editar_joc(&mut self, centered_ui: &mut egui::Ui) {}
+    fn setup_sincronitzacio(&mut self, centered_ui: &mut egui::Ui) {}
 }
 impl eframe::App for PgGUI {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // --- Menu Bar using Top Panel ---
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
             self.setup_top_panel(ctx, ui);
         });
-        // --- Central Panel for the Main Content ---
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading(format!("Mode: {:?}", self.current_mode));
-            ui.separator();
-            match self.current_mode {
-                AppMode::Dashboard => {
-                    self.setup_dashboard(ui);
-                }
-                AppMode::Configuracio => {
-                    self.setup_configuracio(ui);
-                }
-                AppMode::EditarJoc => {
-                    self.setup_editar_joc(ui);
-                }
-                AppMode::Sincronitzacio => {
-                    self.setup_sincronitzacio(ui);
-                }
-            }
+        egui::CentralPanel::default().show(ctx, |main_ui| {
+            // Bloc centrat horitzontalment però mantenint layout vertical
+            main_ui.vertical_centered(|main_vertical_ui| {
+                main_vertical_ui.with_layout(egui::Layout::top_down(egui::Align::Center), |centered_ui| {
+                    centered_ui.set_width(700.0);
+                    match self.current_mode {
+                        AppMode::Dashboard => {
+                            self.setup_dashboard(centered_ui);
+                        }
+                        AppMode::Configuracio => {
+                            self.setup_configuracio(centered_ui);
+                        }
+                        AppMode::EditarJoc => {
+                            self.setup_editar_joc(centered_ui);
+                        }
+                        AppMode::Sincronitzacio => {
+                            self.setup_sincronitzacio(centered_ui);
+                        }
+                    };
+                });
+            });
         });
     }
 }

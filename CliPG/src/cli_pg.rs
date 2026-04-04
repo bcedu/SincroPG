@@ -144,7 +144,7 @@ impl CliPG {
         f.sync_all().unwrap();
         drop(f);
     }
-    fn load_local_jocs(&mut self) -> Vec<VideojocConfig> {
+    pub fn load_local_jocs(&mut self) -> Vec<VideojocConfig> {
         self.vjocs = Vec::new();
         let mut error_jocs = Vec::new();
         for v in self.config.videojocs_habilitats.list.iter() {

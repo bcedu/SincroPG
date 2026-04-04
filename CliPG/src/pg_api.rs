@@ -1,9 +1,6 @@
 use crate::videojoc::Videojoc;
 use crate::videojoc::partida_guardada::PartidaGuardada;
-use eframe::egui::TextBuffer;
-use reqwest::Response;
 use serde::{Deserialize, Serialize};
-use std::fmt::format;
 use urlencoding::encode;
 
 pub trait PartidesGuardadesAPI {
@@ -168,7 +165,6 @@ pub mod tests {
     use crate::pg_api::{PartidesGuardadesAPI, PgAPI};
     use crate::videojoc::Videojoc;
     use crate::videojoc::partida_guardada::PartidaGuardada;
-    use eframe::egui::TextBuffer;
     use mockito::{Mock, Server};
     use std::path::PathBuf;
     use urlencoding::encode;
