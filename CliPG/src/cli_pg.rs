@@ -68,11 +68,11 @@ impl CliPG {
             config_path: config_path.to_str().unwrap().to_string(),
         }
     }
-    pub fn afegir_joc(&mut self, path: String) -> Result<(), String> {
+    pub fn afegir_joc(&mut self, path: String, nom_joc: Option<String>) -> Result<(), String> {
         let pbuf = PathBuf::from(&path);
         if pbuf.exists() {
             let v = VideojocConfig {
-                nom: pbuf.file_name().unwrap().to_str().unwrap().to_string(),
+                nom: nom_joc.unwrap_or_else(|| pbuf.file_name().unwrap().to_str().unwrap().to_string()),
                 path,
                 partides_guardades: Vec::new(),
             };
@@ -553,7 +553,7 @@ partides_guardades = []
         assert_eq!(cli.config.videojocs_habilitats.list.len(), 2);
         CliPG::save_config(&cli.config, Some(PathBuf::from(cli.config_path.clone())));
         // Un path fictici no afegeix res
-        let err = cli.afegir_joc("/home/patata/Napoleon TW".to_string());
+        let err = cli.afegir_joc("/home/patata/Napoleon TW".to_string(), None);
         assert!(err.is_err());
         assert_eq!(cli.config.videojocs_habilitats.list.len(), 2);
         let res_cont = read_file_sync(cli.config_path.clone());
@@ -577,7 +577,7 @@ partides_guardades = []
         );
         // Un path real si que afageix
         let test_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/path a videojocs/Mount & blade Warband 2");
-        cli.afegir_joc(test_path.to_str().unwrap().to_string());
+        cli.afegir_joc(test_path.to_str().unwrap().to_string(), None);
         assert_eq!(cli.config.videojocs_habilitats.list.len(), 3);
         let res_cont = read_file_sync(cli.config_path.clone());
         assert_eq!(
@@ -605,7 +605,7 @@ partides_guardades = []
         );
         // Un path repetit no fa res
         let test_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/path a videojocs/Mount & blade Warband 2");
-        cli.afegir_joc(test_path.to_str().unwrap().to_string());
+        cli.afegir_joc(test_path.to_str().unwrap().to_string(), None);
         assert_eq!(cli.config.videojocs_habilitats.list.len(), 3);
         let res_cont = read_file_sync(cli.config_path.clone());
         assert_eq!(
@@ -725,7 +725,7 @@ contrasenya = "admin"
 list = []
 "#
         );
-        let result = clipg.afegir_joc(joc_path.to_str().unwrap().to_string());
+        let result = clipg.afegir_joc(joc_path.to_str().unwrap().to_string(), None);
         assert!(result.is_ok());
         let config_content = read_file_sync(clipg.config_path.clone());
         assert_eq!(

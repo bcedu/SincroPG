@@ -63,7 +63,7 @@ fn main() {
                 println!("* {}\n    -> {}\n", v.nom, v.path);
             }
         } else if let Some(path) = matches.get_one::<String>("add") {
-            let res = clipg.afegir_joc(path.to_string());
+            let res = clipg.afegir_joc(path.to_string(), None);
             res.unwrap_or_else(|err| println!("{err}"));
         } else if let Some(videojoc) = matches.get_one::<String>("remove") {
             let res = clipg.eliminar_joc(videojoc.to_string());

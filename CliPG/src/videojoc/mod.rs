@@ -28,7 +28,9 @@ impl Videojoc {
         }
     }
     pub fn from(videojoc: &Videojoc) -> Self {
-        Videojoc::new(videojoc.local_folder.to_str().unwrap().to_string()).with_partides_guardades(videojoc.partides_guardades.clone())
+        Videojoc::new(videojoc.local_folder.to_str().unwrap().to_string())
+            .with_nom(videojoc.nom.clone().into_string().unwrap())
+            .with_partides_guardades(videojoc.partides_guardades.clone())
     }
     pub fn with_nom(mut self, nom: String) -> Self {
         self.nom = OsString::from(nom);
