@@ -13,7 +13,6 @@ enum AppMode {
     Dashboard,
     EditarJoc,
     Configuracio,
-    Sincronitzacio,
 }
 pub struct PgGUI {
     clipg_config_path: Option<PathBuf>,
@@ -22,6 +21,9 @@ pub struct PgGUI {
     activitat: String,
     joc_afegit: String,
     joc_afegit_nom: String,
+    config_url: String,
+    config_usuari: String,
+    config_contrasenya: String,
 }
 impl Default for PgGUI {
     fn default() -> Self {
@@ -32,6 +34,9 @@ impl Default for PgGUI {
             activitat: String::new(),
             joc_afegit: String::new(),
             joc_afegit_nom: String::new(),
+            config_url: String::new(),
+            config_usuari: String::new(),
+            config_contrasenya: String::new(),
         }
     }
 }
@@ -41,6 +46,9 @@ impl PgGUI {
             let clipg = CliPG::default(self.clipg_config_path.clone());
             let conectat = if clipg.api.probar_connexio() { "✔ Conectat" } else { "❌ Desconectat" };
             self.estat_servidor = format!("{} ({})", conectat, clipg.config.server.url,);
+            self.config_url = clipg.config.server.url;
+            self.config_usuari = clipg.config.server.usuari;
+            self.config_contrasenya = clipg.config.server.contrasenya;
         }
         self.estat_servidor.clone()
     }
@@ -68,6 +76,13 @@ impl PgGUI {
         clipg.afegir_joc(path_joc, Some(nom_joc.clone()));
         self.activitat = format!("'{nom_joc}' afegit correctament");
     }
+    fn guardar_configuracio(&mut self, url: String, usuari: String, contrasenya: String) {
+        let mut clipg = CliPG::default(self.clipg_config_path.clone());
+        clipg.config.server.url = url;
+        clipg.config.server.usuari = usuari;
+        clipg.config.server.contrasenya = contrasenya;
+        CliPG::save_config(&clipg.config, self.clipg_config_path.clone());
+    }
     fn setup_top_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         egui::menu::bar(ui, |ui| {
             ui.menu_button("Fitxer", |ui| {
@@ -80,7 +95,7 @@ impl PgGUI {
             });
             ui.menu_button("Edita", |ui| {
                 if ui.button("Preferències").clicked() {
-                    // TODO -> Posar la vista AppMode::Configuracio
+                    self.current_mode = AppMode::Configuracio;
                 }
             });
         });
@@ -128,8 +143,23 @@ impl PgGUI {
     }
     fn setup_dashboard_servidor_status(&mut self, centered_ui: &mut egui::Ui) {
         centered_ui.add_space(10.0);
-        egui::Frame::group(centered_ui.style()).show(centered_ui, |group_ui| {
-            group_ui.label(format!("Estat servidor: {}", self.get_estat_servidor()));
+        egui::Frame::group(centered_ui.style()).show(centered_ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.label("Estat servidor:");
+                let estat_servidor = self.get_estat_servidor();
+                let color;
+                if estat_servidor.contains("Desconectat") {
+                    color = egui::Color32::RED;
+                } else {
+                    color = egui::Color32::GREEN;
+                }
+                ui.colored_label(color, format!("{}", estat_servidor));
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                    if ui.button("⚙ Editar").clicked() {
+                        self.current_mode = AppMode::Configuracio;
+                    }
+                });
+            });
         });
     }
     fn setup_dashboard_activitat(&mut self, centered_ui: &mut egui::Ui) {
@@ -147,7 +177,42 @@ impl PgGUI {
             });
         });
     }
-    fn setup_configuracio(&mut self, centered_ui: &mut egui::Ui) {}
+    fn setup_configuracio(&mut self, centered_ui: &mut egui::Ui) {
+        centered_ui.add_space(10.0);
+        egui::Frame::group(centered_ui.style()).show(centered_ui, |group_ui| {
+            group_ui.heading("⚙ Configuració");
+            group_ui.add_space(10.0);
+            group_ui.vertical_centered_justified(|vui| {
+                vui.horizontal(|ui| {
+                    ui.label("URL:");
+                    ui.add(egui::TextEdit::singleline(&mut self.config_url).code_editor());
+                });
+                vui.horizontal(|ui| {
+                    ui.label("Usuari:");
+                    ui.add(egui::TextEdit::singleline(&mut self.config_usuari).code_editor());
+                });
+                vui.horizontal(|ui| {
+                    ui.label("Contrasenya:");
+                    ui.add(egui::TextEdit::singleline(&mut self.config_contrasenya).code_editor());
+                });
+                vui.add_space(10.0);
+                vui.horizontal(|hui| {
+                    hui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button("Desar").clicked() {
+                            self.guardar_configuracio(self.config_url.clone(), self.config_usuari.clone(), self.config_contrasenya.clone());
+                            self.estat_servidor = String::new();
+                            self.current_mode = AppMode::Dashboard;
+                        }
+                        if ui.button("Cancel·lar").clicked() {
+                            self.estat_servidor = String::new();
+                            self.current_mode = AppMode::Dashboard;
+                        }
+                    });
+                });
+            });
+            group_ui.add_space(10.0);
+        });
+    }
     fn setup_editar_joc(&mut self, centered_ui: &mut egui::Ui) {
         centered_ui.add_space(10.0);
         egui::Frame::group(centered_ui.style()).show(centered_ui, |group_ui| {
@@ -191,7 +256,6 @@ impl PgGUI {
             group_ui.add_space(10.0);
         });
     }
-    fn setup_sincronitzacio(&mut self, centered_ui: &mut egui::Ui) {}
 }
 impl eframe::App for PgGUI {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
@@ -212,9 +276,6 @@ impl eframe::App for PgGUI {
                         }
                         AppMode::EditarJoc => {
                             self.setup_editar_joc(centered_ui);
-                        }
-                        AppMode::Sincronitzacio => {
-                            self.setup_sincronitzacio(centered_ui);
                         }
                     };
                 });

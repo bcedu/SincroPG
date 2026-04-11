@@ -66,6 +66,9 @@ impl PgAPI {
         self.make_request(RTYPE::DELETE, endpoint, None)
     }
     fn make_request(&self, rtype: RTYPE, endpoint: &str, body: Option<PartidaGuardadaContingutAPI>) -> reqwest::blocking::Response {
+        self.make_request_inner(rtype, endpoint, body).unwrap_or_else(|e| panic!("Error en la petició: {}", e))
+    }
+    fn make_request_inner(&self, rtype: RTYPE, endpoint: &str, body: Option<PartidaGuardadaContingutAPI>) -> Result<reqwest::blocking::Response, reqwest::Error> {
         let mut request_url = format!("{url}/api/v1", url = self.url.clone());
         for endpoint_part in endpoint.split('/') {
             request_url = format!("{}/{}", request_url, encode(endpoint_part));
@@ -88,7 +91,7 @@ impl PgAPI {
                 response = self.client.delete(request_url).basic_auth(self.usuari.clone(), Some(self.contrassenya.clone())).send();
             }
         }
-        response.unwrap()
+        response
     }
     pub fn _post_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> PartidaGuardadaContingutAPI {
         if partida_guardada.videojoc.is_empty() {
@@ -113,8 +116,11 @@ impl PgAPI {
 
 impl PartidesGuardadesAPI for PgAPI {
     fn probar_connexio(&self) -> bool {
-        // GET /api/v1/test
-        self.make_get_request("test").status().is_success()
+        // TODO: encara que hi hagi un usuari/contrasenya incorrectes retorna true, hauria de ser false o hauriem de tindre un altre metode de check?
+        match self.make_request_inner(RTYPE::GET, "test", None) {
+            Ok(resp) => resp.status().is_success(),
+            Err(_) => false,
+        }
     }
     fn get_videojocs(&self) -> Vec<String> {
         // GET /api/v1/videojocs

@@ -128,7 +128,7 @@ impl CliPG {
         }
         config
     }
-    fn save_config(config: &CliPgConfig, path: Option<PathBuf>) {
+    pub fn save_config(config: &CliPgConfig, path: Option<PathBuf>) {
         let cpath;
         if path.is_none() {
             cpath = Self::get_config_path();
