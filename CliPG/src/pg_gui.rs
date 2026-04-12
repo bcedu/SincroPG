@@ -104,14 +104,21 @@ impl PgGUI {
                 .corner_radius(6.0),
         )
     }
-    fn ui_primary_danger_button(ui: &mut egui::Ui, text: &str) -> egui::Response {
+    fn ui_danger_button(ui: &mut egui::Ui, text: &str) -> egui::Response {
         ui.add(
             egui::Button::new(egui::RichText::new(text).color(egui::Color32::WHITE).strong().size(14.0))
                 .fill(egui::Color32::from_rgb(230, 90, 90))
                 .corner_radius(6.0),
         )
     }
-    fn ui_secondary_button(ui: &mut egui::Ui, text: &str) -> egui::Response {
+    fn ui_button(ui: &mut egui::Ui, text: &str) -> egui::Response {
+        ui.add(
+            egui::Button::new(egui::RichText::new(text).color(egui::Color32::BLACK).strong().size(14.0))
+                .fill(egui::Color32::LIGHT_GRAY)
+                .corner_radius(6.0),
+        )
+    }
+    fn ui_primary_secondary_button(ui: &mut egui::Ui, text: &str) -> egui::Response {
         ui.add(
             egui::Button::new(egui::RichText::new(text).color(egui::Color32::from_rgb(0, 120, 215)).strong())
                 .fill(egui::Color32::TRANSPARENT)
@@ -119,11 +126,19 @@ impl PgGUI {
                 .corner_radius(6.0),
         )
     }
-    fn ui_secondary_danger_button(ui: &mut egui::Ui, text: &str) -> egui::Response {
+    fn ui_danger_secondary_button(ui: &mut egui::Ui, text: &str) -> egui::Response {
         ui.add(
             egui::Button::new(egui::RichText::new(text).color(egui::Color32::from_rgb(230, 90, 90)).strong())
                 .fill(egui::Color32::TRANSPARENT)
                 .stroke(egui::Stroke::new(1.0, egui::Color32::from_rgb(230, 90, 90)))
+                .corner_radius(6.0),
+        )
+    }
+    fn ui_secondary_button(ui: &mut egui::Ui, text: &str) -> egui::Response {
+        ui.add(
+            egui::Button::new(egui::RichText::new(text).color(egui::Color32::DARK_GRAY).strong())
+                .fill(egui::Color32::TRANSPARENT)
+                .stroke(egui::Stroke::new(1.0, egui::Color32::DARK_GRAY))
                 .corner_radius(6.0),
         )
     }
@@ -154,7 +169,7 @@ impl PgGUI {
         Self::ui_card(centered_ui, Some("🎮 Videojocs a sincronitzar"), |group_ui| {
             egui::ScrollArea::vertical().show(group_ui, |scroll_ui| {
                 scroll_ui.horizontal(|row_ui| {
-                    if row_ui.button("+ Afegir joc").clicked() {
+                    if Self::ui_button(row_ui, "+ Afegir joc").clicked() {
                         self.current_mode = AppMode::EditarJoc;
                     }
                     row_ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |right_ui| {
@@ -170,10 +185,15 @@ impl PgGUI {
                     scroll_ui.horizontal(|row_ui| {
                         row_ui.strong(joc.nom.clone().to_str().unwrap());
                         row_ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |right_ui| {
-                            if Self::ui_secondary_danger_button(right_ui, "🗑").clicked() {
+                            if Self::ui_danger_secondary_button(right_ui, "🗑").clicked() {
                                 self.eliminar_joc(joc);
                             }
-                            if Self::ui_secondary_button(right_ui, "🔄").clicked() {
+                            if Self::ui_secondary_button(right_ui, "🛠").clicked() {
+                                self.joc_afegit = joc.local_folder.clone().display().to_string();
+                                self.joc_afegit_nom = joc.nom.clone().into_string().unwrap();
+                                self.current_mode = AppMode::EditarJoc;
+                            }
+                            if Self::ui_primary_secondary_button(right_ui, "🔄").clicked() {
                                 self.sincronitzar_joc(joc);
                             }
                         });
@@ -197,7 +217,7 @@ impl PgGUI {
                 ui.label("Estat servidor:");
                 ui.colored_label(color, format!("{}", estat_servidor));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                    if ui.button("⚙ Editar").clicked() {
+                    if Self::ui_button(ui, "⚙ Editar").clicked() {
                         self.current_mode = AppMode::Configuracio;
                     }
                 });
@@ -226,17 +246,17 @@ impl PgGUI {
                 vui.add_space(4.0);
                 vui.horizontal(|ui| {
                     ui.label("URL:");
-                    ui.add(egui::TextEdit::singleline(&mut self.config_url).code_editor());
+                    ui.add(egui::TextEdit::singleline(&mut self.config_url).code_editor().desired_width(f32::INFINITY));
                 });
                 vui.add_space(4.0);
                 vui.horizontal(|ui| {
                     ui.label("Usuari:");
-                    ui.add(egui::TextEdit::singleline(&mut self.config_usuari).code_editor());
+                    ui.add(egui::TextEdit::singleline(&mut self.config_usuari).code_editor().desired_width(f32::INFINITY));
                 });
                 vui.add_space(4.0);
                 vui.horizontal(|ui| {
                     ui.label("Contrasenya:");
-                    ui.add(egui::TextEdit::singleline(&mut self.config_contrasenya).code_editor());
+                    ui.add(egui::TextEdit::singleline(&mut self.config_contrasenya).code_editor().desired_width(f32::INFINITY));
                 });
                 vui.add_space(10.0);
                 vui.horizontal(|hui| {
@@ -246,7 +266,7 @@ impl PgGUI {
                             self.estat_servidor = String::new();
                             self.current_mode = AppMode::Dashboard;
                         }
-                        if Self::ui_primary_danger_button(ui, "Cancel·lar").clicked() {
+                        if Self::ui_danger_button(ui, "Cancel·lar").clicked() {
                             self.estat_servidor = String::new();
                             self.current_mode = AppMode::Dashboard;
                         }
@@ -264,7 +284,7 @@ impl PgGUI {
                 vui.horizontal(|hui| {
                     hui.label("Directori de partides guardades:");
                     if self.joc_afegit.is_empty() {
-                        if hui.button("Seleccionar carpeta").clicked() {
+                        if Self::ui_button(hui, "Seleccionar carpeta").clicked() {
                             if let Some(path) = FileDialog::new().pick_folder() {
                                 let folder_path = Some(path.display().to_string());
                                 let v = Videojoc::new(folder_path.unwrap());
@@ -273,13 +293,21 @@ impl PgGUI {
                             }
                         }
                     } else {
-                        hui.add(egui::Label::new(&self.joc_afegit).wrap());
+                        hui.add(egui::TextEdit::singleline(&mut self.joc_afegit).desired_width(f32::INFINITY));
+                        if Self::ui_button(hui, "🛠").clicked() {
+                            if let Some(path) = FileDialog::new().pick_folder() {
+                                let folder_path = Some(path.display().to_string());
+                                let v = Videojoc::new(folder_path.unwrap());
+                                self.joc_afegit = v.local_folder.display().to_string();
+                                self.joc_afegit_nom = v.nom.into_string().unwrap();
+                            }
+                        }
                     }
                 });
                 vui.add_space(4.0);
                 vui.horizontal_top(|ui| {
                     ui.label("Nom:");
-                    ui.add(egui::TextEdit::singleline(&mut self.joc_afegit_nom));
+                    ui.add(egui::TextEdit::singleline(&mut self.joc_afegit_nom).desired_width(f32::INFINITY));
                 });
                 vui.add_space(10.0);
                 vui.horizontal(|hui| {
@@ -287,10 +315,12 @@ impl PgGUI {
                         if Self::ui_primary_button(ui, "Afegir").clicked() {
                             self.afegir_joc(self.joc_afegit.clone(), self.joc_afegit_nom.clone());
                             self.joc_afegit = String::new();
+                            self.joc_afegit_nom = String::new();
                             self.current_mode = AppMode::Dashboard;
                         }
-                        if Self::ui_primary_danger_button(ui, "Cancel·lar").clicked() {
+                        if Self::ui_danger_button(ui, "Cancel·lar").clicked() {
                             self.joc_afegit = String::new();
+                            self.joc_afegit_nom = String::new();
                             self.current_mode = AppMode::Dashboard;
                         }
                     });
