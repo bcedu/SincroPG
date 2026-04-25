@@ -3,8 +3,10 @@ use crate::videojoc::Videojoc;
 use eframe::egui::{self, CornerRadius, RichText};
 use rfd::FileDialog;
 use std::path::PathBuf;
+use tray_icon::{Icon, TrayIcon, TrayIconBuilder, menu::Menu};
 
 pub fn start_pg_gui(clipg_config_path: Option<PathBuf>) -> Result<(), eframe::Error> {
+    gtk::init().ok();
     let options = eframe::NativeOptions::default();
     eframe::run_native("CliPG: Sincronitzacio de partides guardades", options, Box::new(|_cc| Ok(Box::new(PgGUI::default()))))
 }
@@ -24,6 +26,7 @@ pub struct PgGUI {
     config_url: String,
     config_usuari: String,
     config_contrasenya: String,
+    tray_icon: Option<TrayIcon>,
 }
 impl Default for PgGUI {
     fn default() -> Self {
@@ -37,6 +40,7 @@ impl Default for PgGUI {
             config_url: String::new(),
             config_usuari: String::new(),
             config_contrasenya: String::new(),
+            tray_icon: None,
         }
     }
 }
@@ -342,8 +346,32 @@ impl PgGUI {
         });
     }
 }
+
+impl PgGUI {
+    fn setup_tray_icon(&mut self) {
+        if self.tray_icon.is_none() {
+            let tray_menu = Menu::new();
+            let tray_icon = TrayIconBuilder::new()
+                .with_icon(self.setup_tray_icon_icon())
+                .with_menu(Box::new(tray_menu))
+                .with_tooltip("system-tray - tray icon library!")
+                .build()
+                .unwrap();
+            tray_icon.set_visible(true).unwrap();
+            self.tray_icon = Some(tray_icon);
+            println!("Tray icon setup")
+        }
+    }
+    fn setup_tray_icon_icon(&self) -> Icon {
+        let img = image::ImageBuffer::from_pixel(16, 16, image::Rgba([0, 120, 215, 255]));
+        let rgba = img.into_raw();
+        Icon::from_rgba(rgba, 16, 16).unwrap()
+    }
+}
+
 impl eframe::App for PgGUI {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.setup_tray_icon();
         self.setup_style(ctx);
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
             self.setup_top_panel(ctx, ui);
