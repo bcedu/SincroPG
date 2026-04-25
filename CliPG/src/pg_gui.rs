@@ -5,7 +5,7 @@ use rfd::FileDialog;
 use std::path::PathBuf;
 
 pub fn start_pg_gui(clipg_config_path: Option<PathBuf>) -> Result<(), eframe::Error> {
-    let options = PgGUI::get_default_egui_options();
+    let options = PgGUI::get_default_egui_options(&clipg_config_path);
     let res = eframe::run_native("CliPG: Sincronitzacio de partides guardades", options, Box::new(|_cc| Ok(Box::new(PgGUI::default()))));
     res
 }
@@ -45,8 +45,10 @@ impl Default for PgGUI {
 }
 // Metodes per configurar opcions de la UI
 impl PgGUI {
-    fn get_default_egui_options() -> eframe::NativeOptions {
-        let res = eframe::NativeOptions::default();
+    fn get_default_egui_options(clipg_config_path: &Option<PathBuf>) -> eframe::NativeOptions {
+        let mut res = eframe::NativeOptions::default();
+        res.persist_window = true;
+        res.persistence_path = clipg_config_path.clone();
         res
     }
     fn setup_style(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
@@ -66,6 +68,7 @@ impl PgGUI {
     }
     fn setup_signal_close(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if ctx.input(|i| i.viewport().close_requested()) {
+            self.quit_app = true; // TODO: fins que no sapiga fer una instancia de app unica no puc fer que s'amagui i ja. S'ha de tancar la app
             if !self.quit_app {
                 ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
                 ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
