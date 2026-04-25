@@ -3,12 +3,11 @@ use crate::videojoc::Videojoc;
 use eframe::egui::{self, CornerRadius, RichText};
 use rfd::FileDialog;
 use std::path::PathBuf;
-use tray_icon::{Icon, TrayIcon, TrayIconBuilder, menu::Menu};
 
 pub fn start_pg_gui(clipg_config_path: Option<PathBuf>) -> Result<(), eframe::Error> {
-    gtk::init().ok();
-    let options = eframe::NativeOptions::default();
-    eframe::run_native("CliPG: Sincronitzacio de partides guardades", options, Box::new(|_cc| Ok(Box::new(PgGUI::default()))))
+    let options = PgGUI::get_default_egui_options();
+    let res = eframe::run_native("CliPG: Sincronitzacio de partides guardades", options, Box::new(|_cc| Ok(Box::new(PgGUI::default()))));
+    res
 }
 #[derive(Debug, PartialEq, Clone, Copy)]
 enum AppMode {
@@ -26,7 +25,7 @@ pub struct PgGUI {
     config_url: String,
     config_usuari: String,
     config_contrasenya: String,
-    tray_icon: Option<TrayIcon>,
+    quit_app: bool,
 }
 impl Default for PgGUI {
     fn default() -> Self {
@@ -40,12 +39,44 @@ impl Default for PgGUI {
             config_url: String::new(),
             config_usuari: String::new(),
             config_contrasenya: String::new(),
-            tray_icon: None,
+            quit_app: false,
         }
     }
 }
+// Metodes per configurar opcions de la UI
 impl PgGUI {
-    // Metodes amb logica de aplicacio
+    fn get_default_egui_options() -> eframe::NativeOptions {
+        let res = eframe::NativeOptions::default();
+        res
+    }
+    fn setup_style(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Tema Clar/Fosc
+        if ctx.system_theme().or_else(|| Some(egui::Theme::Light)) == Some(egui::Theme::Light) {
+            ctx.set_theme(egui::Theme::Light);
+        } else {
+            ctx.set_theme(egui::Theme::Dark);
+        }
+        ctx.all_styles_mut(|style| {
+            // Marge als buttons
+            style.spacing.button_padding = egui::vec2(12.0, 4.0);
+        });
+    }
+    fn setup_signals(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.setup_signal_close(ctx, _frame);
+    }
+    fn setup_signal_close(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        if ctx.input(|i| i.viewport().close_requested()) {
+            if !self.quit_app {
+                ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+                ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+            } else {
+                self.quit_app = false;
+            }
+        }
+    }
+}
+// Metodes amb logica de aplicacio
+impl PgGUI {
     fn get_estat_servidor(&mut self) -> String {
         if self.estat_servidor.is_empty() {
             let clipg = CliPG::default(self.clipg_config_path.clone());
@@ -89,9 +120,8 @@ impl PgGUI {
         CliPG::save_config(&clipg.config, self.clipg_config_path.clone());
     }
 }
-
+// Metodes amb components i construiccio de la UI
 impl PgGUI {
-    // Metodes amb logica de GUI
     fn ui_card<F: FnOnce(&mut egui::Ui)>(ui: &mut egui::Ui, title: Option<&str>, add: F) {
         egui::Frame::group(ui.style()).corner_radius(CornerRadius::same(8)).inner_margin(12.0).show(ui, |ui| {
             if let Some(title) = title {
@@ -152,7 +182,8 @@ impl PgGUI {
                 if ui.button("Afegir joc").clicked() {
                     self.current_mode = AppMode::EditarJoc;
                 }
-                if ui.button("Surt").clicked() {
+                if ui.button("Tancar i sortir").clicked() {
+                    self.quit_app = true;
                     ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                 }
             });
@@ -333,46 +364,13 @@ impl PgGUI {
             group_ui.add_space(10.0);
         });
     }
-    fn setup_style(&mut self, ctx: &egui::Context) {
-        // Tema Clar/Fosc
-        if ctx.system_theme().or_else(|| Some(egui::Theme::Light)) == Some(egui::Theme::Light) {
-            ctx.set_theme(egui::Theme::Light);
-        } else {
-            ctx.set_theme(egui::Theme::Dark);
-        }
-        ctx.all_styles_mut(|style| {
-            // Marge als buttons
-            style.spacing.button_padding = egui::vec2(12.0, 4.0);
-        });
-    }
 }
-
-impl PgGUI {
-    fn setup_tray_icon(&mut self) {
-        if self.tray_icon.is_none() {
-            let tray_menu = Menu::new();
-            let tray_icon = TrayIconBuilder::new()
-                .with_icon(self.setup_tray_icon_icon())
-                .with_menu(Box::new(tray_menu))
-                .with_tooltip("system-tray - tray icon library!")
-                .build()
-                .unwrap();
-            tray_icon.set_visible(true).unwrap();
-            self.tray_icon = Some(tray_icon);
-            println!("Tray icon setup")
-        }
-    }
-    fn setup_tray_icon_icon(&self) -> Icon {
-        let img = image::ImageBuffer::from_pixel(16, 16, image::Rgba([0, 120, 215, 255]));
-        let rgba = img.into_raw();
-        Icon::from_rgba(rgba, 16, 16).unwrap()
-    }
-}
-
+// Bucle principal de egui
 impl eframe::App for PgGUI {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        self.setup_tray_icon();
-        self.setup_style(ctx);
+    fn ui(&mut self, egui_ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        let ctx = egui_ui.ctx();
+        self.setup_signals(ctx, _frame);
+        self.setup_style(ctx, _frame);
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
             self.setup_top_panel(ctx, ui);
         });
