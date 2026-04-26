@@ -1,12 +1,14 @@
 use crate::cli_pg::CliPG;
 use crate::videojoc::Videojoc;
 use eframe::egui::{self, CornerRadius, RichText};
+use interprocess::local_socket::prelude::*;
+use interprocess::local_socket::{GenericNamespaced, ListenerOptions};
 use rfd::FileDialog;
 use single_instance::SingleInstance;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 
-const IPC_ADDR: &str = "127.0.0.1:44555";
+const SOCKET_NAME: &str = "clipg_socket";
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 enum AppMode {
@@ -68,32 +70,31 @@ impl PgGUI {
         self.setup_signal_close(ctx, _frame);
         self.setup_single_instance_activate(ctx, _frame);
     }
-    fn notify_activate_to_existing_instance() -> bool {
+    fn notify_activate_to_existing_instance() {
         println!("Instancia secundaria: intentant activar instancia principal.");
-        if let Ok(mut stream) = std::net::TcpStream::connect(IPC_ADDR) {
-            let _ = stream.write_all(b"activate");
-            println!("Instancia secundaria: senyal a instancia principal enviat.");
-            return true;
+        let name = SOCKET_NAME.to_ns_name::<GenericNamespaced>().unwrap();
+        if let Ok(mut conn) = LocalSocketStream::connect(name) {
+            let _ = conn.write_all(b"activate");
         }
-        false
     }
     fn start_single_instance_thread(&mut self, ctx: &egui::Context) {
         self.single_instance_thread_started = true;
         let ctx2 = ctx.clone();
         std::thread::spawn(move || {
-            let listener = match std::net::TcpListener::bind(IPC_ADDR) {
-                Ok(l) => l,
-                Err(e) => {
-                    eprintln!("IPC bind error: {:?}", e);
-                    return;
-                }
-            };
-            println!("Instancia principal: thread d'instancia única iniciat.");
-            for stream in listener.incoming() {
-                if let Ok(mut stream) = stream {
-                    let mut buf = [0; 16];
-                    let _ = stream.read(&mut buf);
-                    PgGUI::activate_window(&ctx2);
+            let name = SOCKET_NAME.to_ns_name::<GenericNamespaced>().unwrap();
+            let listener = ListenerOptions::new().name(name).create_sync().expect("No es pot crear el socket IPC");
+            println!("Instancia principal: IPC listener iniciat");
+            for conn in listener.incoming() {
+                match conn {
+                    Ok(mut conn) => {
+                        let mut buf = [0; 16];
+                        let _ = conn.read(&mut buf);
+                        println!("Instancia principal: activant finestra");
+                        PgGUI::activate_window(&ctx2);
+                    }
+                    Err(e) => {
+                        eprintln!("Error IPC: {e}");
+                    }
                 }
             }
         });
