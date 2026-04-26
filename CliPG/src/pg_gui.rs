@@ -2,12 +2,23 @@ use crate::cli_pg::CliPG;
 use crate::videojoc::Videojoc;
 use eframe::egui::{self, CornerRadius, RichText};
 use rfd::FileDialog;
+use single_instance::SingleInstance;
+use std::io::Write;
+use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::PathBuf;
 
+const SOCKET_PATH: &str = "/tmp/clipg.sock";
+
 pub fn start_pg_gui(clipg_config_path: Option<PathBuf>) -> Result<(), eframe::Error> {
-    let options = PgGUI::get_default_egui_options(&clipg_config_path);
-    let res = eframe::run_native("CliPG: Sincronitzacio de partides guardades", options, Box::new(|_cc| Ok(Box::new(PgGUI::default()))));
-    res
+    let instance = SingleInstance::new("clipg").unwrap();
+    if !instance.is_single() {
+        PgGUI::notify_activate_to_existing_instance();
+        return Ok(());
+    } else {
+        let options = PgGUI::get_default_egui_options(&clipg_config_path);
+        let res = eframe::run_native("CliPG: Sincronitzacio de partides guardades", options, Box::new(|_cc| Ok(Box::new(PgGUI::default()))));
+        res
+    }
 }
 #[derive(Debug, PartialEq, Clone, Copy)]
 enum AppMode {
@@ -26,6 +37,7 @@ pub struct PgGUI {
     config_usuari: String,
     config_contrasenya: String,
     quit_app: bool,
+    single_instance_thread_started: bool,
 }
 impl Default for PgGUI {
     fn default() -> Self {
@@ -40,6 +52,7 @@ impl Default for PgGUI {
             config_usuari: String::new(),
             config_contrasenya: String::new(),
             quit_app: false,
+            single_instance_thread_started: false,
         }
     }
 }
@@ -50,6 +63,37 @@ impl PgGUI {
         res.persist_window = true;
         res.persistence_path = clipg_config_path.clone();
         res
+    }
+    fn setup_signals(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.setup_signal_close(ctx, _frame);
+        self.setup_single_instance_activate(ctx, _frame);
+    }
+    fn notify_activate_to_existing_instance() -> bool {
+        if let Ok(mut stream) = UnixStream::connect(SOCKET_PATH) {
+            let _ = stream.write_all(b"activate");
+            return true;
+        }
+        false
+    }
+    fn start_single_instance_thread(&mut self, ctx: &egui::Context) {
+        self.single_instance_thread_started = true;
+        let ctx2 = ctx.clone();
+        std::thread::spawn(move || {
+            let _ = std::fs::remove_file(SOCKET_PATH);
+            let listener = UnixListener::bind(SOCKET_PATH).unwrap();
+            for _ in listener.incoming() {
+                PgGUI::activate_window(&ctx2);
+            }
+        });
+    }
+    fn setup_single_instance_activate(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        if !self.single_instance_thread_started {
+            self.start_single_instance_thread(ctx);
+        }
+    }
+    fn activate_window(ctx: &egui::Context) {
+        ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+        ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
     }
     fn setup_style(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // Tema Clar/Fosc
@@ -63,12 +107,8 @@ impl PgGUI {
             style.spacing.button_padding = egui::vec2(12.0, 4.0);
         });
     }
-    fn setup_signals(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        self.setup_signal_close(ctx, _frame);
-    }
     fn setup_signal_close(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if ctx.input(|i| i.viewport().close_requested()) {
-            self.quit_app = true; // TODO: fins que no sapiga fer una instancia de app unica no puc fer que s'amagui i ja. S'ha de tancar la app
             if !self.quit_app {
                 ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
                 ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
