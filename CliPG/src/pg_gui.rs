@@ -3,11 +3,10 @@ use crate::videojoc::Videojoc;
 use eframe::egui::{self, CornerRadius, RichText};
 use rfd::FileDialog;
 use single_instance::SingleInstance;
-use std::io::Write;
-use std::os::unix::net::{UnixListener, UnixStream};
+use std::io::{Read, Write};
 use std::path::PathBuf;
 
-const SOCKET_PATH: &str = "/tmp/clipg.sock";
+const IPC_ADDR: &str = "127.0.0.1:44555";
 
 pub fn start_pg_gui(clipg_config_path: Option<PathBuf>) -> Result<(), eframe::Error> {
     let instance = SingleInstance::new("clipg").unwrap();
@@ -69,7 +68,7 @@ impl PgGUI {
         self.setup_single_instance_activate(ctx, _frame);
     }
     fn notify_activate_to_existing_instance() -> bool {
-        if let Ok(mut stream) = UnixStream::connect(SOCKET_PATH) {
+        if let Ok(mut stream) = std::net::TcpStream::connect(IPC_ADDR) {
             let _ = stream.write_all(b"activate");
             return true;
         }
@@ -79,10 +78,13 @@ impl PgGUI {
         self.single_instance_thread_started = true;
         let ctx2 = ctx.clone();
         std::thread::spawn(move || {
-            let _ = std::fs::remove_file(SOCKET_PATH);
-            let listener = UnixListener::bind(SOCKET_PATH).unwrap();
-            for _ in listener.incoming() {
-                PgGUI::activate_window(&ctx2);
+            let listener = std::net::TcpListener::bind(IPC_ADDR).expect("No es pot obrir el port IPC");
+            for stream in listener.incoming() {
+                if let Ok(mut stream) = stream {
+                    let mut buf = [0; 16];
+                    let _ = stream.read(&mut buf);
+                    PgGUI::activate_window(&ctx2);
+                }
             }
         });
     }
