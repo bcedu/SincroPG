@@ -81,7 +81,13 @@ impl PgGUI {
         self.single_instance_thread_started = true;
         let ctx2 = ctx.clone();
         std::thread::spawn(move || {
-            let listener = std::net::TcpListener::bind(IPC_ADDR).expect("No es pot obrir el port IPC");
+            let listener = match std::net::TcpListener::bind(IPC_ADDR) {
+                Ok(l) => l,
+                Err(e) => {
+                    eprintln!("IPC bind error: {:?}", e);
+                    return;
+                }
+            };
             println!("Instancia principal: thread d'instancia única iniciat.");
             for stream in listener.incoming() {
                 if let Ok(mut stream) = stream {
