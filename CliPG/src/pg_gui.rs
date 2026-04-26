@@ -14,6 +14,7 @@ pub fn start_pg_gui(clipg_config_path: Option<PathBuf>) -> Result<(), eframe::Er
         PgGUI::notify_activate_to_existing_instance();
         return Ok(());
     } else {
+        println!("Instancia principal: iniciant UI.");
         let options = PgGUI::get_default_egui_options(&clipg_config_path);
         let res = eframe::run_native("CliPG: Sincronitzacio de partides guardades", options, Box::new(|_cc| Ok(Box::new(PgGUI::default()))));
         res
@@ -68,8 +69,10 @@ impl PgGUI {
         self.setup_single_instance_activate(ctx, _frame);
     }
     fn notify_activate_to_existing_instance() -> bool {
+        println!("Instancia secundaria: intentant activar instancia principal.");
         if let Ok(mut stream) = std::net::TcpStream::connect(IPC_ADDR) {
             let _ = stream.write_all(b"activate");
+            println!("Instancia secundaria: senyal a instancia principal enviat.");
             return true;
         }
         false
@@ -79,6 +82,7 @@ impl PgGUI {
         let ctx2 = ctx.clone();
         std::thread::spawn(move || {
             let listener = std::net::TcpListener::bind(IPC_ADDR).expect("No es pot obrir el port IPC");
+            println!("Instancia principal: thread d'instancia única iniciat.");
             for stream in listener.incoming() {
                 if let Ok(mut stream) = stream {
                     let mut buf = [0; 16];
@@ -90,6 +94,7 @@ impl PgGUI {
     }
     fn setup_single_instance_activate(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if !self.single_instance_thread_started {
+            println!("Instancia principal: iniciant thread d'instancia única.");
             self.start_single_instance_thread(ctx);
         }
     }
