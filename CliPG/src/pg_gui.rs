@@ -8,18 +8,6 @@ use std::path::PathBuf;
 
 const IPC_ADDR: &str = "127.0.0.1:44555";
 
-pub fn start_pg_gui(clipg_config_path: Option<PathBuf>) -> Result<(), eframe::Error> {
-    let instance = SingleInstance::new("clipg").unwrap();
-    if !instance.is_single() {
-        PgGUI::notify_activate_to_existing_instance();
-        return Ok(());
-    } else {
-        println!("Instancia principal: iniciant UI.");
-        let options = PgGUI::get_default_egui_options(&clipg_config_path);
-        let res = eframe::run_native("CliPG: Sincronitzacio de partides guardades", options, Box::new(|_cc| Ok(Box::new(PgGUI::default()))));
-        res
-    }
-}
 #[derive(Debug, PartialEq, Clone, Copy)]
 enum AppMode {
     Dashboard,
@@ -56,8 +44,20 @@ impl Default for PgGUI {
         }
     }
 }
-// Metodes per configurar opcions de la UI
+// Metodes per inicialitxar i configurar comportaments la UI
 impl PgGUI {
+    pub fn start_pg_gui(clipg_config_path: Option<PathBuf>) -> Result<(), eframe::Error> {
+        let instance = SingleInstance::new("clipg").unwrap();
+        if !instance.is_single() {
+            PgGUI::notify_activate_to_existing_instance();
+            return Ok(());
+        } else {
+            println!("Instancia principal: iniciant UI.");
+            let options = PgGUI::get_default_egui_options(&clipg_config_path);
+            let res = eframe::run_native("CliPG: Sincronitzacio de partides guardades", options, Box::new(|_cc| Ok(Box::new(PgGUI::default()))));
+            res
+        }
+    }
     fn get_default_egui_options(clipg_config_path: &Option<PathBuf>) -> eframe::NativeOptions {
         let mut res = eframe::NativeOptions::default();
         res.persist_window = true;
@@ -176,7 +176,7 @@ impl PgGUI {
         CliPG::save_config(&clipg.config, self.clipg_config_path.clone());
     }
 }
-// Metodes amb components i construiccio de la UI
+// Metodes amb components i contruccio de la UI
 impl PgGUI {
     fn ui_card<F: FnOnce(&mut egui::Ui)>(ui: &mut egui::Ui, title: Option<&str>, add: F) {
         egui::Frame::group(ui.style()).corner_radius(CornerRadius::same(8)).inner_margin(12.0).show(ui, |ui| {
