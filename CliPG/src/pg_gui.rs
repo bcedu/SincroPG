@@ -182,6 +182,9 @@ impl PgGUI {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
             } else {
                 self.quit_app = false;
+                if self.config_sincronitzar_al_tancar {
+                    self.sincronitzar_tots();
+                }
             }
         }
     }
