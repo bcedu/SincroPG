@@ -1,33 +1,71 @@
 use crate::cli_pg::CliPG;
 use crate::videojoc::Videojoc;
+use eframe::App;
 use eframe::egui::{self, CornerRadius, RichText};
 use interprocess::local_socket::prelude::*;
 use interprocess::local_socket::{GenericNamespaced, ListenerOptions};
 use rfd::FileDialog;
+use serde::{Deserialize, Serialize};
 use single_instance::SingleInstance;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 
+// TODO: es podria migrar a https://github.com/stephenberry/egui-elegance/tree/main
+
 const SOCKET_NAME: &str = "clipg_socket";
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+/*
+ * TODO:
+ * - Implementar sincronitzar al tancar
+ * - Implementar sincronitzacio periodica
+ */
+
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 enum AppMode {
     Dashboard,
     EditarJoc,
     Configuracio,
 }
+impl Default for AppMode {
+    fn default() -> Self {
+        AppMode::Dashboard
+    }
+}
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+enum ConfigTancarAplicacio {
+    BackgroundApp,
+    CloseApp,
+}
+impl Default for ConfigTancarAplicacio {
+    fn default() -> Self {
+        ConfigTancarAplicacio::BackgroundApp
+    }
+}
+#[derive(Serialize, Deserialize)]
 pub struct PgGUI {
+    #[serde(skip)]
     clipg_config_path: Option<PathBuf>,
+    #[serde(skip)]
     current_mode: AppMode,
+    #[serde(skip)]
     estat_servidor: String,
+    #[serde(skip)]
     activitat: String,
+    #[serde(skip)]
     joc_afegit: String,
+    #[serde(skip)]
     joc_afegit_nom: String,
+    #[serde(skip)]
+    quit_app: bool,
+    #[serde(skip)]
+    single_instance_thread_started: bool,
+    // Coses que si que es guarden al tancar la app
     config_url: String,
     config_usuari: String,
     config_contrasenya: String,
-    quit_app: bool,
-    single_instance_thread_started: bool,
+    config_tancar_aplicacio: ConfigTancarAplicacio,
+    config_sincronitzar_al_tancar: bool,
+    config_sincronitzar_cada_x_minuts: u64,
 }
 impl Default for PgGUI {
     fn default() -> Self {
@@ -41,6 +79,9 @@ impl Default for PgGUI {
             config_url: String::new(),
             config_usuari: String::new(),
             config_contrasenya: String::new(),
+            config_tancar_aplicacio: ConfigTancarAplicacio::BackgroundApp,
+            config_sincronitzar_al_tancar: false,
+            config_sincronitzar_cada_x_minuts: 0,
             quit_app: false,
             single_instance_thread_started: false,
         }
@@ -53,12 +94,22 @@ impl PgGUI {
         if !instance.is_single() {
             PgGUI::notify_activate_to_existing_instance();
             return Ok(());
-        } else {
-            println!("Instancia principal: iniciant UI.");
-            let options = PgGUI::get_default_egui_options(&clipg_config_path);
-            let res = eframe::run_native("CliPG: Sincronitzacio de partides guardades", options, Box::new(|_cc| Ok(Box::new(PgGUI::default()))));
-            res
         }
+        println!("Instancia principal: iniciant UI.");
+        let options = PgGUI::get_default_egui_options(&clipg_config_path);
+        eframe::run_native(
+            "CliPG: Sincronitzacio de partides guardades",
+            options,
+            Box::new(|cc| {
+                let app: PgGUI = if let Some(storage) = cc.storage {
+                    eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default()
+                } else {
+                    PgGUI::default()
+                };
+
+                Ok(Box::new(app))
+            }),
+        )
     }
     fn get_default_egui_options(clipg_config_path: &Option<PathBuf>) -> eframe::NativeOptions {
         let mut res = eframe::NativeOptions::default();
@@ -123,6 +174,9 @@ impl PgGUI {
     }
     fn setup_signal_close(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if ctx.input(|i| i.viewport().close_requested()) {
+            if self.config_tancar_aplicacio == ConfigTancarAplicacio::CloseApp {
+                self.quit_app = true;
+            }
             if !self.quit_app {
                 ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
                 ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
@@ -169,12 +223,20 @@ impl PgGUI {
         clipg.afegir_joc(path_joc, Some(nom_joc.clone()));
         self.activitat = format!("'{nom_joc}' afegit correctament");
     }
-    fn guardar_configuracio(&mut self, url: String, usuari: String, contrasenya: String) {
+    fn guardar_configuracio(&mut self, url: String, usuari: String, contrasenya: String, storage: &mut dyn eframe::Storage) {
         let mut clipg = CliPG::default(self.clipg_config_path.clone());
         clipg.config.server.url = url;
         clipg.config.server.usuari = usuari;
         clipg.config.server.contrasenya = contrasenya;
         CliPG::save_config(&clipg.config, self.clipg_config_path.clone());
+        self.save(storage);
+    }
+    fn restaurar_configuracio(&mut self, storage: &mut dyn eframe::Storage) {
+        if let Some(loaded) = eframe::get_value::<PgGUI>(storage, eframe::APP_KEY) {
+            self.config_tancar_aplicacio = loaded.config_tancar_aplicacio;
+            self.config_sincronitzar_al_tancar = loaded.config_sincronitzar_al_tancar;
+            self.config_sincronitzar_cada_x_minuts = loaded.config_sincronitzar_cada_x_minuts;
+        }
     }
 }
 // Metodes amb components i contruccio de la UI
@@ -251,7 +313,7 @@ impl PgGUI {
             });
         });
     }
-    fn setup_dashboard(&mut self, centered_ui: &mut egui::Ui) {
+    fn setup_dashboard(&mut self, centered_ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         self.setup_dashboard_videojocs_habilitats(centered_ui);
         self.setup_dashboard_servidor_status(centered_ui);
         self.setup_dashboard_activitat(centered_ui);
@@ -331,9 +393,60 @@ impl PgGUI {
             });
         });
     }
-    fn setup_configuracio(&mut self, centered_ui: &mut egui::Ui) {
+    fn setup_configuracio(&mut self, centered_ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         centered_ui.add_space(10.0);
         Self::ui_card(centered_ui, Some("⚙ Configuració"), |group_ui| {
+            group_ui.vertical_centered_justified(|vui| {
+                vui.add_space(4.0);
+                vui.horizontal(|ui| {
+                    ui.label("En tancar la finestra:");
+                    ui.horizontal(|ui| {
+                        ui.radio_value(&mut self.config_tancar_aplicacio, ConfigTancarAplicacio::BackgroundApp, "Executar en segon pla");
+                        ui.radio_value(&mut self.config_tancar_aplicacio, ConfigTancarAplicacio::CloseApp, "Tancar la aplicació");
+                    });
+                });
+                vui.add_space(4.0);
+                vui.horizontal(|ui| {
+                    ui.label("Sincronitzar al tancar la aplicació:");
+                    ui.horizontal(|ui| {
+                        ui.checkbox(&mut self.config_sincronitzar_al_tancar, "");
+                    });
+                });
+                vui.add_space(4.0);
+                vui.horizontal(|ui| {
+                    ui.label("Sincronitzar periòdicament cada X minuts:");
+                    ui.horizontal(|ui| {
+                        ui.add(
+                            egui::DragValue::new(&mut self.config_sincronitzar_cada_x_minuts)
+                                .speed(1)
+                                .range(0..=40320)
+                                .suffix("    (clica per editar)"),
+                        );
+                    });
+                });
+                vui.horizontal(|ui| {
+                    ui.label("(deixar a 0 per desactivar la sincornització periòdica)");
+                });
+                vui.add_space(10.0);
+                vui.horizontal(|hui| {
+                    hui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if Self::ui_primary_button(ui, "Desar").clicked() {
+                            self.guardar_configuracio(self.config_url.clone(), self.config_usuari.clone(), self.config_contrasenya.clone(), _frame.storage_mut().unwrap());
+                            self.estat_servidor = String::new();
+                            self.current_mode = AppMode::Dashboard;
+                        }
+                        if Self::ui_danger_button(ui, "Cancel·lar").clicked() {
+                            self.restaurar_configuracio(_frame.storage_mut().unwrap());
+                            self.estat_servidor = String::new();
+                            self.current_mode = AppMode::Dashboard;
+                        }
+                    });
+                });
+            });
+            group_ui.add_space(10.0);
+        });
+        centered_ui.add_space(10.0);
+        Self::ui_card(centered_ui, Some("⚙ Servidor"), |group_ui| {
             group_ui.vertical_centered_justified(|vui| {
                 vui.add_space(4.0);
                 vui.horizontal(|ui| {
@@ -354,11 +467,12 @@ impl PgGUI {
                 vui.horizontal(|hui| {
                     hui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if Self::ui_primary_button(ui, "Desar").clicked() {
-                            self.guardar_configuracio(self.config_url.clone(), self.config_usuari.clone(), self.config_contrasenya.clone());
+                            self.guardar_configuracio(self.config_url.clone(), self.config_usuari.clone(), self.config_contrasenya.clone(), _frame.storage_mut().unwrap());
                             self.estat_servidor = String::new();
                             self.current_mode = AppMode::Dashboard;
                         }
                         if Self::ui_danger_button(ui, "Cancel·lar").clicked() {
+                            self.restaurar_configuracio(_frame.storage_mut().unwrap());
                             self.estat_servidor = String::new();
                             self.current_mode = AppMode::Dashboard;
                         }
@@ -368,7 +482,7 @@ impl PgGUI {
             group_ui.add_space(10.0);
         });
     }
-    fn setup_editar_joc(&mut self, centered_ui: &mut egui::Ui) {
+    fn setup_editar_joc(&mut self, centered_ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         centered_ui.add_space(10.0);
         Self::ui_card(centered_ui, Some("🎮 Afegir Joc"), |group_ui| {
             group_ui.vertical_centered_justified(|vui| {
@@ -438,17 +552,21 @@ impl eframe::App for PgGUI {
                     centered_ui.set_width(700.0);
                     match self.current_mode {
                         AppMode::Dashboard => {
-                            self.setup_dashboard(centered_ui);
+                            self.setup_dashboard(centered_ui, _frame);
                         }
                         AppMode::Configuracio => {
-                            self.setup_configuracio(centered_ui);
+                            self.setup_configuracio(centered_ui, _frame);
                         }
                         AppMode::EditarJoc => {
-                            self.setup_editar_joc(centered_ui);
+                            self.setup_editar_joc(centered_ui, _frame);
                         }
                     };
                 });
             });
         });
+    }
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        println!("Guardant opcions");
+        eframe::set_value(storage, eframe::APP_KEY, self);
     }
 }
