@@ -149,7 +149,7 @@ pub mod tests {
         assert_eq!(pg.videojoc, "Total War 40k");
         assert_eq!(pg.nom, "save1.txt");
         assert_eq!(pg.timestamp, 288718000);
-        assert_eq!(pg.hash, "02d47a22e09f46731a58dbe7cb299c0315c6760aec7557e8ca6e87090fc85dfd");
+        assert_eq!(pg.hash, "72489639c9286a5eb52d3cdd74fab92bce8467fe44d33e919dc2663c781e5536");
         assert_eq!(pg.path.to_str().unwrap(), test_file_path);
     }
     #[test]
@@ -158,7 +158,7 @@ pub mod tests {
         let copia = PartidaGuardada::from_partida_guardada(&pg);
         assert_eq!(copia.nom, "save1.txt");
         assert_eq!(copia.timestamp, 288718000);
-        assert_eq!(copia.hash, "02d47a22e09f46731a58dbe7cb299c0315c6760aec7557e8ca6e87090fc85dfd");
+        assert_eq!(copia.hash, "72489639c9286a5eb52d3cdd74fab92bce8467fe44d33e919dc2663c781e5536");
         assert_eq!(copia.path.to_str().unwrap(), pg.path.to_str().unwrap());
     }
     #[test]

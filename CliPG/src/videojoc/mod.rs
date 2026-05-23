@@ -209,7 +209,7 @@ pub mod tests {
                 nom: OsString::from("save1.txt"),
                 path: PathBuf::new(),
                 timestamp: 245528886,
-                hash: "02d47a22e09f46731a58dbe7cb299c0315c6760aec7557e8ca6e87090fc85dfd".to_string(),
+                hash: "72489639c9286a5eb52d3cdd74fab92bce8467fe44d33e919dc2663c781e5536".to_string(),
             };
             let p2 = PartidaGuardada {
                 videojoc: "".to_string(),

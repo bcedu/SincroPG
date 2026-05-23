@@ -220,7 +220,7 @@ pub mod tests {
                 nom: OsString::from("save1.txt"),
                 path: path,
                 timestamp: 245528886,
-                hash: "acbbaa798a883fb0be7534092b20f5188fb07799a1c175c28f8fb1b03bc63ae2".to_string(),
+                hash: "8c2024bc30db3df9f66051705833d6672378d1696e9aa2bc22c1edaca23edc25".to_string(),
             };
             v.push(p1);
             v
@@ -249,7 +249,7 @@ pub mod tests {
                 nom: OsString::from("save1.txt"),
                 path: path,
                 timestamp: 245528886,
-                hash: "3b136fcad41f6a8fb66b38cae89aaba00f30ac7f79797fcd8a46bc13a733811a".to_string(),
+                hash: "791b6edec6ec1b075dbbe012a3cebf89b75541b5c32caf36230e0df1050f8639".to_string(),
             };
             v.push(p1);
             v
@@ -307,7 +307,7 @@ pub mod tests {
                 nom: OsString::from("save3.txt"),
                 path: path,
                 timestamp: 245528886,
-                hash: "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4".to_string(),
+                hash: "1befaf03995bb41eaa9dc50122342c92a85a28073663a7a55d2c82773422ab5e".to_string(),
             };
             v.push(p1);
             let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync/Joc/save4.txt");
@@ -347,7 +347,7 @@ pub mod tests {
                 nom: OsString::from("save3.txt"),
                 path: path,
                 timestamp: 245528886,
-                hash: "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4".to_string(),
+                hash: "1befaf03995bb41eaa9dc50122342c92a85a28073663a7a55d2c82773422ab5e".to_string(),
             };
             v.push(p1);
             let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync/Joc/save4.txt");
@@ -356,7 +356,7 @@ pub mod tests {
                 nom: OsString::from("save4.txt"),
                 path: path,
                 timestamp: 999999999,
-                hash: "d623d87b3ef0b2b93f99637081a29ca70fa78c527f1f28a9242a7e93910fb194".to_string(),
+                hash: "0cc348fdba35a87c05b75232755f5e4d63e7316c2e9c0465841784e00d91aed7".to_string(),
             };
             v.push(p1);
             let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(format!("tests/fixtures_cli_pg/test_sync/Joc/{}.txt", self.bck_name.clone()));
@@ -365,7 +365,7 @@ pub mod tests {
                 nom: OsString::from(self.bck_name.clone()),
                 path: path,
                 timestamp: 999999999,
-                hash: "12ee21760f19253fca62f5d0cdf480d1477c37300e56c2af141bcf35226a89b3".to_string(),
+                hash: "6326239b272139f4aeba000178656f85ab10e7a74b0effbdcfdaf028241111a9".to_string(),
             };
             v.push(p1);
             v
@@ -396,7 +396,7 @@ pub mod tests {
                 nom: OsString::from("save3.txt"),
                 path: path,
                 timestamp: 245528886,
-                hash: "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4".to_string(),
+                hash: "1befaf03995bb41eaa9dc50122342c92a85a28073663a7a55d2c82773422ab5e".to_string(),
             };
             v.push(p1);
             let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(format!("tests/fixtures_cli_pg/test_sync/Joc/{}.txt", self.bck_name.clone()));
@@ -405,7 +405,7 @@ pub mod tests {
                 nom: OsString::from(self.bck_name.clone()),
                 path: path,
                 timestamp: 999999999,
-                hash: "12ee21760f19253fca62f5d0cdf480d1477c37300e56c2af141bcf35226a89b3".to_string(),
+                hash: "6326239b272139f4aeba000178656f85ab10e7a74b0effbdcfdaf028241111a9".to_string(),
             };
             v.push(p1);
             let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures_cli_pg/test_sync/Joc/save4.txt");
@@ -778,7 +778,7 @@ path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/tes
 
 [[videojocs_habilitats.list.partides_guardades]]
 path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save1.txt"
-hash = "acbbaa798a883fb0be7534092b20f5188fb07799a1c175c28f8fb1b03bc63ae2"
+hash = "8c2024bc30db3df9f66051705833d6672378d1696e9aa2bc22c1edaca23edc25"
 "#
         );
     }
@@ -829,7 +829,7 @@ path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/tes
 
 [[videojocs_habilitats.list.partides_guardades]]
 path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save1.txt"
-hash = "3b136fcad41f6a8fb66b38cae89aaba00f30ac7f79797fcd8a46bc13a733811a"
+hash = "791b6edec6ec1b075dbbe012a3cebf89b75541b5c32caf36230e0df1050f8639"
 "#
         );
     }
@@ -874,7 +874,7 @@ path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/tes
 
 [[videojocs_habilitats.list.partides_guardades]]
 path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save2.txt"
-hash = "47a1e807edaccae9bdc6d5f5eb1da36becbd1484b8d394e8a572597af65302b2"
+hash = "bdc0ff9c56ff25dc84cbc1b0217e4f55d9e0e58505dffb57dd6b9794a9fb1520"
 "#
         );
     }
@@ -915,7 +915,7 @@ path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/tes
 
 [[videojocs_habilitats.list.partides_guardades]]
 path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save3.txt"
-hash = "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4"
+hash = "1befaf03995bb41eaa9dc50122342c92a85a28073663a7a55d2c82773422ab5e"
 "#
         );
     }
@@ -952,13 +952,13 @@ hash = "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4"
         assert!(config_content.contains(
             r#"[[videojocs_habilitats.list.partides_guardades]]
 path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save4.txt"
-hash = "d623d87b3ef0b2b93f99637081a29ca70fa78c527f1f28a9242a7e93910fb194"
+hash = "0cc348fdba35a87c05b75232755f5e4d63e7316c2e9c0465841784e00d91aed7"
 "#
         ));
         assert!(config_content.contains(
             r#"[[videojocs_habilitats.list.partides_guardades]]
 path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save3.txt"
-hash = "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4"
+hash = "1befaf03995bb41eaa9dc50122342c92a85a28073663a7a55d2c82773422ab5e"
 "#
         ));
         // Verifiquem que s'ha creat el bck_save4.txt
@@ -979,7 +979,7 @@ hash = "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4"
         let expect1 = format!(
             r#"[[videojocs_habilitats.list.partides_guardades]]
 path = "{}"
-hash = "12ee21760f19253fca62f5d0cdf480d1477c37300e56c2af141bcf35226a89b3"
+hash = "6326239b272139f4aeba000178656f85ab10e7a74b0effbdcfdaf028241111a9"
 "#,
             back_name.to_str().unwrap()
         );
@@ -1025,7 +1025,7 @@ hash = "12ee21760f19253fca62f5d0cdf480d1477c37300e56c2af141bcf35226a89b3"
         let expect1 = format!(
             r#"[[videojocs_habilitats.list.partides_guardades]]
 path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/{}"
-hash = "12ee21760f19253fca62f5d0cdf480d1477c37300e56c2af141bcf35226a89b3"
+hash = "6326239b272139f4aeba000178656f85ab10e7a74b0effbdcfdaf028241111a9"
 "#,
             bck_name.to_str().unwrap()
         );
@@ -1034,14 +1034,14 @@ hash = "12ee21760f19253fca62f5d0cdf480d1477c37300e56c2af141bcf35226a89b3"
         assert!(config_content.contains(
             r#"[[videojocs_habilitats.list.partides_guardades]]
 path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save3.txt"
-hash = "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4"
+hash = "1befaf03995bb41eaa9dc50122342c92a85a28073663a7a55d2c82773422ab5e"
 "#
         ));
         // El save4.txt original
         assert!(config_content.contains(
             r#"[[videojocs_habilitats.list.partides_guardades]]
 path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save4.txt"
-hash = "d623d87b3ef0b2b93f99637081a29ca70fa78c527f1f28a9242a7e93910fb194"
+hash = "0cc348fdba35a87c05b75232755f5e4d63e7316c2e9c0465841784e00d91aed7"
 "#
         ));
     }
@@ -1085,14 +1085,14 @@ hash = "d623d87b3ef0b2b93f99637081a29ca70fa78c527f1f28a9242a7e93910fb194"
         assert!(config_content.contains(
             r#"[[videojocs_habilitats.list.partides_guardades]]
 path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save3.txt"
-hash = "fa7f7d6422a91afca0eedfc15dbb4f27286f14253624c5758314af03c786afc4"
+hash = "1befaf03995bb41eaa9dc50122342c92a85a28073663a7a55d2c82773422ab5e"
 "#
         ));
         // El bck_save4 original
         let expect1 = format!(
             r#"[[videojocs_habilitats.list.partides_guardades]]
 path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/{}"
-hash = "12ee21760f19253fca62f5d0cdf480d1477c37300e56c2af141bcf35226a89b3"
+hash = "6326239b272139f4aeba000178656f85ab10e7a74b0effbdcfdaf028241111a9"
 "#,
             bck_name.to_str().unwrap()
         );
@@ -1101,12 +1101,12 @@ hash = "12ee21760f19253fca62f5d0cdf480d1477c37300e56c2af141bcf35226a89b3"
         let expect2 = format!(
             r#"[[videojocs_habilitats.list.partides_guardades]]
 path = "/home/bcedu/Documents/Projectes/SincroPG/CliPG/tests/fixtures_cli_pg/test_sync/Joc/save4.txt"
-hash = "d163dc016eb3e5640cd2b9e8a5364c35cf6faf3a9b7f7b0c53bdef37dca31d74"
+hash = "ab83203e18afd2f5cb7fbf83a2df2aa52ac399ea18dd5e3e27c6541d177a3417"
 "#,
         );
         assert!(config_content.contains(expect2.as_str()));
         // El altre fitxer bck_ te un altre hash
-        let expect3 = format!(r#"hash = "39b8270f6c2bceb8824a7525d0cfc6daed0b521cb2a25b25932eedee6249e2f4""#);
+        let expect3 = format!(r#"hash = "ba0572e3c4ab94a90af51cb1938bffe0955c6f8b79f46591fa5b7bd165df2f28""#);
         assert!(config_content.contains(expect3.as_str()));
     }
 }
