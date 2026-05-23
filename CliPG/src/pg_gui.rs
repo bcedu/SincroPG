@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use single_instance::SingleInstance;
 use std::io::{Read, Write};
 use std::path::PathBuf;
+use std::sync::mpsc::{self, Receiver, Sender};
 
 // TODO: es podria migrar a https://github.com/stephenberry/egui-elegance/tree/main
 
@@ -16,8 +17,7 @@ const SOCKET_NAME: &str = "clipg_socket";
 
 /*
  * TODO:
- * - Implementar sincronitzar al tancar
- * - Implementar sincronitzacio periodica
+ * - Hi ha fitxers que encara peten al sincronitzar
  */
 
 #[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
@@ -41,6 +41,11 @@ impl Default for ConfigTancarAplicacio {
         ConfigTancarAplicacio::BackgroundApp
     }
 }
+enum SyncCommand {
+    Stop,
+    SetupSyncData(Option<PathBuf>),
+    UpdateInterval(u64),
+}
 #[derive(Serialize, Deserialize)]
 pub struct PgGUI {
     #[serde(skip)]
@@ -59,6 +64,12 @@ pub struct PgGUI {
     quit_app: bool,
     #[serde(skip)]
     single_instance_thread_started: bool,
+    #[serde(skip)]
+    sync_tx: Option<Sender<SyncCommand>>,
+    #[serde(skip)]
+    sync_thread_started: bool,
+    #[serde(skip)]
+    sync_result_rx: Option<Receiver<String>>,
     // Coses que si que es guarden al tancar la app
     config_url: String,
     config_usuari: String,
@@ -84,6 +95,9 @@ impl Default for PgGUI {
             config_sincronitzar_cada_x_minuts: 0,
             quit_app: false,
             single_instance_thread_started: false,
+            sync_thread_started: false,
+            sync_tx: None,
+            sync_result_rx: None,
         }
     }
 }
@@ -120,6 +134,12 @@ impl PgGUI {
     fn setup_signals(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.setup_signal_close(ctx, _frame);
         self.setup_single_instance_activate(ctx, _frame);
+        self.setup_sync_thread();
+        if let Some(rx) = &self.sync_result_rx {
+            while let Ok(res) = rx.try_recv() {
+                self.activitat = res;
+            }
+        }
     }
     fn notify_activate_to_existing_instance() {
         println!("Instancia secundaria: intentant activar instancia principal.");
@@ -133,20 +153,72 @@ impl PgGUI {
         let ctx2 = ctx.clone();
         std::thread::spawn(move || {
             let name = SOCKET_NAME.to_ns_name::<GenericNamespaced>().unwrap();
-            let listener = ListenerOptions::new().name(name).create_sync().expect("No es pot crear el socket IPC");
-            println!("Instancia principal: IPC listener iniciat");
+            let listener = ListenerOptions::new().name(name).create_sync().expect("No es pot crear el socket IPC.");
+            println!("Instancia principal: IPC listener iniciat.");
             for conn in listener.incoming() {
                 match conn {
                     Ok(mut conn) => {
                         let mut buf = [0; 16];
                         let _ = conn.read(&mut buf);
-                        println!("Instancia principal: activant finestra");
+                        println!("Instancia principal: activant finestra.");
                         PgGUI::activate_window(&ctx2);
                     }
                     Err(e) => {
-                        eprintln!("Error IPC: {e}");
+                        eprintln!("Error IPC: {e}.");
                     }
                 }
+            }
+        });
+    }
+    fn start_sync_thread(&mut self) {
+        println!("Iniciant thread de sincronitzacio en segon pla...");
+        self.sync_thread_started = true;
+        let (tx_cmd, rx_cmd): (Sender<SyncCommand>, Receiver<SyncCommand>) = mpsc::channel();
+        let (tx_res, rx_res) = mpsc::channel::<String>();
+        self.sync_tx = Some(tx_cmd);
+        self.sync_result_rx = Some(rx_res);
+        std::thread::spawn(move || {
+            println!("Iniciant thread de sincronitzacio en segon pla... Fet!");
+            let mut interval: u64 = 0;
+            let sleep_interval = 60;
+            let mut clipg_config_path: Option<PathBuf> = None;
+            let mut last_sync = std::time::Instant::now();
+            loop {
+                while let Ok(cmd) = rx_cmd.try_recv() {
+                    match cmd {
+                        SyncCommand::Stop => {
+                            println!("Thread de sincronitzacio en segon pla aturat.");
+                            return;
+                        }
+                        SyncCommand::SetupSyncData(config_path) => {
+                            clipg_config_path = config_path;
+                            if let Some(path) = &clipg_config_path {
+                                println!("Path de sincronitzacio configurat a {}.", path.display());
+                            } else {
+                                println!("Path de sincronitzacio eliminat.");
+                            }
+                        }
+                        SyncCommand::UpdateInterval(v) => {
+                            interval = v;
+                            println!("Interval de sincronitzacio periodica configurat a {} segons.", interval);
+                        }
+                    }
+                }
+                if interval == 0 {
+                    println!("TS: interval a 0, dormim una mica");
+                    std::thread::sleep(std::time::Duration::from_secs(sleep_interval));
+                    continue;
+                }
+                // Esperar fins que toqui sincronitzar
+                println!("TS: {}/{}", last_sync.elapsed().as_secs(), interval);
+                if last_sync.elapsed().as_secs() >= interval {
+                    let res = Self::static_sincronitzar_tots(clipg_config_path.clone());
+                    println!("Sincronitzacio periodica completada:");
+                    println!("{res}");
+                    let _ = tx_res.send(res);
+                    last_sync = std::time::Instant::now();
+                }
+                std::thread::sleep(std::time::Duration::from_secs(sleep_interval));
             }
         });
     }
@@ -154,6 +226,25 @@ impl PgGUI {
         if !self.single_instance_thread_started {
             println!("Instancia principal: iniciant thread d'instancia única.");
             self.start_single_instance_thread(ctx);
+        }
+    }
+    fn setup_sync_thread(&mut self) {
+        if !self.sync_thread_started && self.config_sincronitzar_cada_x_minuts > 0 {
+            self.start_sync_thread();
+            self.config_sync_thread();
+        }
+    }
+    fn config_sync_thread(&mut self) {
+        if let Some(tx) = &self.sync_tx {
+            if self.config_sincronitzar_cada_x_minuts == 0 {
+                tx.send(SyncCommand::Stop).ok();
+                self.sync_thread_started = false;
+            } else {
+                tx.send(SyncCommand::SetupSyncData(self.clipg_config_path.clone())).ok();
+                tx.send(SyncCommand::UpdateInterval(self.config_sincronitzar_cada_x_minuts * 60)).ok();
+            }
+        } else {
+            self.setup_sync_thread();
         }
     }
     fn activate_window(ctx: &egui::Context) {
@@ -206,9 +297,14 @@ impl PgGUI {
         self.activitat.clone()
     }
     fn sincronitzar_tots(&mut self) {
-        let mut clipg = CliPG::default(self.clipg_config_path.clone());
+        self.activitat = Self::static_sincronitzar_tots(self.clipg_config_path.clone());
+    }
+    fn static_sincronitzar_tots(clipg_config_path: Option<PathBuf>) -> String {
+        println!("Sincronitzant jocs...");
+        let mut clipg = CliPG::default(clipg_config_path);
         let res = clipg.sync_all(false);
-        self.activitat = res.trim().to_string();
+        println!("Sincronitzant jocs... Fet!");
+        res.trim().to_string()
     }
     fn sincronitzar_joc(&mut self, joc: &mut Videojoc) {
         let mut clipg = CliPG::default(self.clipg_config_path.clone());
@@ -569,7 +665,16 @@ impl eframe::App for PgGUI {
         });
     }
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        println!("Guardant opcions");
+        println!("Guardant opcions.");
+        if let Some(loaded) = eframe::get_value::<PgGUI>(storage, eframe::APP_KEY) {
+            println!(
+                "Comprovem si hem de iniciar thread: {} vs {}",
+                self.config_sincronitzar_cada_x_minuts, loaded.config_sincronitzar_cada_x_minuts,
+            );
+            if self.config_sincronitzar_cada_x_minuts != loaded.config_sincronitzar_cada_x_minuts {
+                self.config_sync_thread();
+            }
+        }
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
 }
