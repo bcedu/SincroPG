@@ -708,7 +708,7 @@ partides_guardades = []
          * Habilitem el "Joc". Aixo actualitza el conf.toml amb el joc habilitat.
          */
         // Fem neteja: eliminem tots els fitxers de test_sync
-        fs::remove_dir_all(test_path).unwrap();
+        fs::remove_dir_all(test_path).ok();
         fs::create_dir(test_path).unwrap();
         fs::create_dir(joc_path).unwrap();
         // Comencem el test
