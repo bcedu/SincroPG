@@ -2,6 +2,7 @@ use crate::pg_api::PartidesGuardadesAPI;
 use crate::videojoc::Videojoc;
 use filetime::FileTime;
 use normalized_hash::Hasher;
+use sha2::{Digest, Sha256};
 use std::ffi::OsString;
 use std::fs;
 use std::fs::File;
@@ -22,7 +23,7 @@ impl PartidaGuardada {
         let hash: String;
         let timestamp: u32;
         if full_path.exists() {
-            hash = Hasher::new().hash_file(&full_path, None::<PathBuf>);
+            hash = PartidaGuardada::hash_file(&full_path);
             timestamp = FileTime::from_last_modification_time(&fs::metadata(path.clone()).unwrap()).nanoseconds();
         } else {
             hash = "".to_string();
@@ -56,9 +57,16 @@ impl PartidaGuardada {
     }
     pub fn update_metadata(&mut self) {
         if self.path.exists() {
-            self.hash = Hasher::new().hash_file(&self.path, None::<PathBuf>);
+            self.hash = PartidaGuardada::hash_file(&self.path);
             self.timestamp = FileTime::from_last_modification_time(&fs::metadata(&self.path).unwrap()).nanoseconds();
         }
+    }
+    fn hash_file(path: &PathBuf) -> String {
+        let data = std::fs::read(path).unwrap_or_default();
+        let mut hasher = Sha256::new();
+        hasher.update(data);
+        let hash_bytes = hasher.finalize();
+        hex::encode(hash_bytes)
     }
     pub fn pujar_partida_guardada(&self, api: &Box<dyn PartidesGuardadesAPI>) {
         api.post_partida_guardada(&self);
@@ -97,6 +105,13 @@ impl PartidaGuardada {
 pub mod tests {
     use super::*;
     use crate::videojoc::tests::get_fake_api;
+    fn get_partida_contingut_no_utf8() -> String {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures_partida_guardada/contingut_no_utf8.save")
+            .to_str()
+            .unwrap()
+            .to_string()
+    }
     fn get_partida_path_ntw_s1() -> String {
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("tests/fixtures_partida_guardada/path a videojocs/Napoleón TW HD/save1.txt")
@@ -208,5 +223,10 @@ pub mod tests {
         partida_ja_existent.duplicar_fitxer(nou_nom.to_string());
         assert!(PathBuf::from(&nou_path).exists());
         fs::remove_file(nou_path).unwrap();
+    }
+    #[test]
+    fn test_hash_no_utf8() {
+        let path_partida_no_utf8 = get_partida_contingut_no_utf8();
+        let p = PartidaGuardada::new(path_partida_no_utf8);
     }
 }
