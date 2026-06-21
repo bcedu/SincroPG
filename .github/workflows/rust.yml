@@ -1,10 +1,10 @@
-name: Build & Release (Linux GUI)
+name: Build & Release
 
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag a usar per la release (ex: v1.2.3)"
+        description: "Tag (ex: v1.2.3)"
         required: true
   push:
     tags:
@@ -14,54 +14,103 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  deb:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install system dependencies
+      - name: Install deps
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential \
-            pkg-config \
-            fakeroot \
-            libgtk-3-dev \
-            libx11-dev \
-            libxrandr-dev \
-            libxinerama-dev \
-            libxcursor-dev \
-            libxi-dev \
-            libgl1-mesa-dev \
-            libglib2.0-0 \
-            libasound2-dev \
-            rpm \
-            dpkg-dev
+            build-essential pkg-config fakeroot dpkg-dev \
+            libgtk-3-dev libx11-dev libxrandr-dev \
+            libxinerama-dev libxcursor-dev libxi-dev \
+            libgl1-mesa-dev libglib2.0-0 libasound2-dev
 
-      - name: Build CliPG binary
-        working-directory: ./CliPG
+      - name: Build
         run: cargo build --release
-
-      - name: Build CliPG packages
         working-directory: ./CliPG
+
+      - name: Build DEB
+        run: make deb
+        working-directory: ./CliPG
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb
+          path: ./CliPG/*.deb
+
+  rpm:
+    runs-on: ubuntu-latest
+    container: fedora:latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install deps
         run: |
-          make deb
+          dnf install -y git gcc make rpm-build \
+            pkgconf-pkg-config gtk3-devel glib2-devel \
+            alsa-lib-devel libX11-devel libXrandr-devel \
+            libXinerama-devel libXcursor-devel libXi-devel \
+            mesa-libGL-devel
 
-      - name: Build SerPG binary
-        working-directory: ./SerPG
+      - name: Build
         run: cargo build --release
+        working-directory: ./CliPG
 
-      - name: Create GitHub Release
+      - name: Build RPM
+        run: make rpm
+        working-directory: ./CliPG
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm
+          path: ./CliPG/build/rpm/RPMS/**/*.rpm
+
+  serpg:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build SerPG
+        run: cargo build --release
+        working-directory: ./SerPG
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: serpg
+          path: ./SerPG/target/release/SerPG
+
+  release:
+    needs: [deb, rpm, serpg]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag != '' && github.event.inputs.tag || github.ref_name }}
-          files: |
-            ./CliPG/target/release/CliPG
-            ./CliPG/*.deb
-            ./CliPG/build/rpm/RPMS/**/*.rpm
-            ./SerPG/target/release/SerPG
+          tag_name: ${{ steps.tag.outputs.tag }}
+          files: dist/**/*
