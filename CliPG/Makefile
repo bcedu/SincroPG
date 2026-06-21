@@ -24,7 +24,7 @@ deb: build
 	cp $(BUILD) build/deb/usr/bin/$(APP)
 	cp packaging/deb/control build/deb/DEBIAN/control
 	cp packaging/shared/clipg.desktop build/deb/usr/share/applications/
-	cp packaging/shared/clipg.png build/deb/usr/share/icons/hicolor/256x256/apps/
+	cp packaging/shared/icons/png/clipg_inv_256.png build/deb/usr/share/icons/hicolor/256x256/apps/clipg.png
 
 	dpkg-deb --build build/deb $(APP)_$(VERSION)_amd64.deb
 
