@@ -38,6 +38,7 @@ rpm: build
 	mkdir -p build/rpm/SOURCES
 	mkdir -p build/rpm/SPECS
 	mkdir -p build/rpm/SRPMS
+	cp target/release/clipg build/rpm/SOURCES/clipg
 
 	rpmbuild \
 		--define "_topdir $(PWD)/build/rpm" \
