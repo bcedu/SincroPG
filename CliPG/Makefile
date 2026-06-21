@@ -39,8 +39,6 @@ rpm: build
 	mkdir -p build/rpm/SPECS
 	mkdir -p build/rpm/SRPMS
 
-	cp $(BUILD) build/rpm/BUILD/$(APP)
-
 	rpmbuild \
 		--define "_topdir $(PWD)/build/rpm" \
 		-ba packaging/rpm/clipg.spec
