@@ -35,7 +35,6 @@ jobs:
             libgl1-mesa-dev \
             libglib2.0-0 \
             libasound2-dev \
-            rpm-build \
             rpm \
             dpkg-dev
 
