@@ -1,4 +1,4 @@
-name: Build & Release
+name: Compilar i Publicar
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ permissions:
   contents: write
 
 jobs:
-  deb:
+  clipg-deb:
     runs-on: ubuntu-latest
 
     steps:
@@ -44,7 +44,7 @@ jobs:
           name: deb
           path: ./CliPG/*.deb
 
-  rpm:
+  clipg-rpm:
     runs-on: ubuntu-latest
     container: fedora:latest
 
@@ -74,7 +74,7 @@ jobs:
           name: rpm
           path: ./CliPG/build/rpm/RPMS/**/*.rpm
 
-  serpg:
+  serpg-bin:
     runs-on: ubuntu-latest
 
     steps:
@@ -92,7 +92,7 @@ jobs:
           path: ./SerPG/target/release/SerPG
 
   release:
-    needs: [deb, rpm, serpg]
+    needs: [clipg-deb, clipg-rpm, serpg-bin]
     runs-on: ubuntu-latest
 
     steps:
