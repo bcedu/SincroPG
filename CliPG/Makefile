@@ -39,8 +39,8 @@ rpm: build
 	mkdir -p build/rpm/SPECS
 	mkdir -p build/rpm/SRPMS
 	cp target/release/clipg build/rpm/SOURCES/clipg
-	cp packaging/shared/clipg.desktop target/release/
-    cp packaging/shared/icons/png/clipg_inv_256.png target/release/
+	cp packaging/shared/clipg.desktop target/release/clipg.desktop
+	cp packaging/shared/icons/png/clipg_inv_256.png target/release/clipg.png
 
 	rpmbuild \
 		--define "_topdir $(PWD)/build/rpm" \
