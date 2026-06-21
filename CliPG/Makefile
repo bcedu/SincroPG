@@ -9,7 +9,7 @@ BUILD=target/release/$(APP)
 # -------------------------
 build:
 	cargo build --release
-	mv target/release/CliPG target/release/$(APP)
+	cp target/release/CliPG target/release/$(APP)
 
 # -------------------------
 # DEB
@@ -28,22 +28,6 @@ deb: build
 
 	dpkg-deb --build build/deb $(APP)_$(VERSION)_amd64.deb
 
-# -------------------------
-# RPM
-# -------------------------
-rpm: build
-	rm -rf build/rpm
-	mkdir -p build/rpm/RPMS
-	mkdir -p build/rpm/BUILD
-	mkdir -p build/rpm/SOURCES
-	mkdir -p build/rpm/SPECS
-	mkdir -p build/rpm/SRPMS
-
-	cp $(BUILD) build/rpm/BUILD/$(APP)
-
-	rpmbuild \
-		--define "_topdir $(PWD)/build/rpm" \
-		-ba packaging/rpm/clipg.spec
 
 # -------------------------
 # CLEAN

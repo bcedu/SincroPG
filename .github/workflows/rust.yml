@@ -47,7 +47,6 @@ jobs:
         working-directory: ./CliPG
         run: |
           make deb
-          make rpm
 
       - name: Build SerPG binary
         working-directory: ./SerPG
