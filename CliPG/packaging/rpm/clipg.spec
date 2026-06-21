@@ -16,8 +16,8 @@ mkdir -p %{buildroot}/usr/share/icons/hicolor/256x256/apps
 
 install -m 755 %{_sourcedir}/clipg %{buildroot}/usr/bin/clipg
 
-cp ../packaging/shared/clipg.desktop %{buildroot}/usr/share/applications/
-cp ../packaging/shared/icons/png/clipg_inv_256.png %{buildroot}/usr/share/icons/hicolor/256x256/apps/clipg.png
+cp %{_sourcedir}/clipg.desktop %{buildroot}/usr/share/applications/
+cp %{_sourcedir}/clipg_inv_256.png %{buildroot}/usr/share/icons/hicolor/256x256/apps/clipg.png
 
 %files
 /usr/bin/clipg
