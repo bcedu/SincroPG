@@ -3,7 +3,7 @@ name: Build & Release (Linux GUI)
 on:
   push:
     tags:
-      - '*'
+      - "*"
 
 permissions:
   contents: write
@@ -19,7 +19,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install system dependencies (IMPORTANT for egui/winit)
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -31,19 +31,29 @@ jobs:
             libxi-dev \
             libgl1-mesa-dev \
             libglib2.0-0 \
-            libasound2-dev
+            libasound2-dev \
+            rpm \
+            dpkg-dev
 
-      - name: Build CliPG (Linux glibc)
+      - name: Build CliPG binary
         working-directory: ./CliPG
         run: cargo build --release
 
-      - name: Build SerPG (Linux glibc)
+      - name: Build CliPG packages
+        working-directory: ./CliPG
+        run: |
+          make deb
+          make rpm
+
+      - name: Build SerPG binary
         working-directory: ./SerPG
         run: cargo build --release
 
-      - name: Create GitHub Release and upload executables
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             ./CliPG/target/release/CliPG
+            ./CliPG/*.deb
+            ./CliPG/build/rpm/RPMS/**/*.rpm
             ./SerPG/target/release/SerPG
