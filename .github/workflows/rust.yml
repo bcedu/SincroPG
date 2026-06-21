@@ -1,6 +1,7 @@
 name: Build & Release (Linux GUI)
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "*"
