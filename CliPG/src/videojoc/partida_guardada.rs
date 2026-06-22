@@ -1,7 +1,6 @@
 use crate::pg_api::PartidesGuardadesAPI;
 use crate::videojoc::Videojoc;
 use filetime::FileTime;
-use normalized_hash::Hasher;
 use sha2::{Digest, Sha256};
 use std::ffi::OsString;
 use std::fs;

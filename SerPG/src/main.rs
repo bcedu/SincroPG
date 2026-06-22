@@ -6,8 +6,8 @@ use axum::{
 };
 use axum_auth::AuthBasic;
 use clap::{Arg, Command};
-use normalized_hash::Hasher;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::{
     fs,
     fs::File,
@@ -64,6 +64,13 @@ impl SerPG {
             .with_state(state);
         SerPG { router: r }
     }
+    fn hash_file(path: &PathBuf) -> String {
+        let data = std::fs::read(path).unwrap_or_default();
+        let mut hasher = Sha256::new();
+        hasher.update(data);
+        let hash_bytes = hasher.finalize();
+        hex::encode(hash_bytes)
+    }
     async fn start(self, port: Option<String>) {
         let port = port.unwrap_or_else(|| String::from("3000"));
         let addr = format!("0.0.0.0:{port}");
@@ -117,7 +124,7 @@ impl SerPG {
         for entry in fs::read_dir(videojoc_path).unwrap() {
             let entry = entry.unwrap();
             let full_path = entry.path();
-            let partida_hash = Hasher::new().hash_file(&full_path, None::<PathBuf>);
+            let partida_hash = Self::hash_file(&full_path);
             let partida = entry.file_name().to_str().unwrap().to_string();
             partides_list.push(PartidaGuardadaAPI {
                 nom: partida,
@@ -351,7 +358,7 @@ pub mod tests {
         assert_eq!(res, "[]");
         // Joc amb partides
         let res = make_get_request("videojocs/Napoleón TW HD/partides").await;
-        let expected_res = "[{\"nom\":\"save1.txt\",\"hash\":\"02d47a22e09f46731a58dbe7cb299c0315c6760aec7557e8ca6e87090fc85dfd\"},{\"nom\":\"save3.txt\",\"hash\":\"158ed8c255d81393d423bc01c4993eceb3bb20a2596659ebc7f14ae82cbde4c8\"}]";
+        let expected_res = "[{\"nom\":\"save1.txt\",\"hash\":\"72489639c9286a5eb52d3cdd74fab92bce8467fe44d33e919dc2663c781e5536\"},{\"nom\":\"save3.txt\",\"hash\":\"2d39cbe113285d20a0f9119b56346daaa17fd195685981cb80d799bda2c27a2c\"}]";
         assert_eq!(res, expected_res);
     }
     #[tokio::test]

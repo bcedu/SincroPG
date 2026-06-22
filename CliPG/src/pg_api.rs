@@ -116,7 +116,6 @@ impl PgAPI {
 
 impl PartidesGuardadesAPI for PgAPI {
     fn probar_connexio(&self) -> bool {
-        // TODO: encara que hi hagi un usuari/contrasenya incorrectes retorna true, hauria de ser false o hauriem de tindre un altre metode de check?
         match self.make_request_inner(RTYPE::GET, "test", None) {
             Ok(resp) => resp.status().is_success(),
             Err(_) => false,

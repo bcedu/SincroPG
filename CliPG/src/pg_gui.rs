@@ -11,13 +11,13 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver, Sender};
 
-// TODO: es podria migrar a https://github.com/stephenberry/egui-elegance/tree/main
-
 const SOCKET_NAME: &str = "clipg_socket";
 
 /*
  * TODO:
- * - Hi ha fitxers que encara peten al sincronitzar
+ * - Conectant per https peta (no se si culpa del client, el servidor o el nginx)
+ * - Si li dones a sincronitzar pero no estas conectat al servidor peta. S'hauria de controlar
+ * - S'hauria de poder visualitzar eks videojocs que estan al servidor per afegirlos al client
  */
 
 #[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]

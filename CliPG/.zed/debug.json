@@ -1,0 +1,14 @@
+[
+  {
+    "label": "CliPG -s",
+    "adapter": "CodeLLDB",
+    "request": "launch",
+    "program": "/home/bcedu/Documents/Projectes/SincroPG/CliPG/target/debug/CliPG",
+    "args": ["-s"],
+    "cwd": "/home/bcedu/Documents/Projectes/SincroPG/CliPG",
+    "build": {
+      "command": "cargo",
+      "args": ["build"],
+    },
+  },
+]
