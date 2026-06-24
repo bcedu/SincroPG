@@ -26,7 +26,7 @@ deb: build
 	cp packaging/shared/clipg.desktop build/deb/usr/share/applications/
 	cp packaging/shared/icons/png/clipg_inv_256.png build/deb/usr/share/icons/hicolor/256x256/apps/clipg.png
 
-	dpkg-deb --compression=xz --build build/deb $(APP)_$(VERSION)_amd64.deb
+	dpkg-deb -Zxz --build build/deb $(APP)_$(VERSION)_amd64.deb
 
 # -------------------------
 # RPM
