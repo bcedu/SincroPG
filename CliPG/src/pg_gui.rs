@@ -15,7 +15,6 @@ const SOCKET_NAME: &str = "clipg_socket";
 
 /*
  * TODO:
- * - Conectant per https peta (no se si culpa del client, el servidor o el nginx)
  * - Si li dones a sincronitzar pero no estas conectat al servidor peta. S'hauria de controlar
  * - S'hauria de poder visualitzar eks videojocs que estan al servidor per afegirlos al client
  */
