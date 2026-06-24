@@ -37,7 +37,7 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: deb
+          name: deb-clipg
           path: ./CliPG/*.deb
 
   clipg-rpm:
@@ -63,7 +63,7 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: rpm
+          name: rpm-clipg
           path: ./CliPG/build/rpm/RPMS/**/*.rpm
 
   serpg-bin:
@@ -87,7 +87,7 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: serpg
+          name: bin-serpg
           path: ./SerPG/target/x86_64-unknown-linux-musl/release/SerPG
 
   serpg-deb:
@@ -120,7 +120,7 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: deb
+          name: deb-serpg
           path: ./SerPG/*.deb
 
   release:
