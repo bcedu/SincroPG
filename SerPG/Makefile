@@ -1,15 +1,14 @@
 APP=serpg
 VERSION=2.15.0
-BUILD=target/release/$(APP)
+BUILD=target/x86_64-unknown-linux-musl/release/SerPG
 
-.PHONY: build deb rpm clean
+.PHONY: build deb clean
 
 # -------------------------
 # BUILD RUST
 # -------------------------
 build:
 	cargo build --release --target x86_64-unknown-linux-musl
-	cp target/x86_64-unknown-linux-musl/release/SerPG target/release/$(APP)
 
 # -------------------------
 # DEB
