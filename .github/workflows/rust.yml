@@ -74,13 +74,14 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-unknown-linux-musl
+
       - name: Install MUSL tools
         run: |
           sudo apt-get update
           sudo apt-get install -y musl-tools
 
       - name: Build SerPG (static MUSL)
-        run: cargo build --release --target x86_64-unknown-linux-musl
+        run: make build
         working-directory: ./SerPG
 
       - name: Upload
@@ -89,8 +90,41 @@ jobs:
           name: serpg
           path: ./SerPG/target/x86_64-unknown-linux-musl/release/SerPG
 
+  serpg-deb:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-musl
+
+      - name: Install MUSL tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential pkg-config fakeroot dpkg-dev \
+            libgtk-3-dev libx11-dev libxrandr-dev \
+            libxinerama-dev libxcursor-dev libxi-dev \
+            libgl1-mesa-dev libglib2.0-0 libasound2-dev
+
+      - name: Build DEB
+        run: make deb
+        working-directory: ./SerPG
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb
+          path: ./SerPG/*.deb
+
   release:
-    needs: [clipg-deb, clipg-rpm, serpg-bin]
+    needs: [clipg-deb, clipg-rpm, serpg-bin, serpg-deb]
     runs-on: ubuntu-latest
 
     steps:

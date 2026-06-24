@@ -1,0 +1,8 @@
+Package: serpg
+Version: 2.15.0
+Section: utils
+Priority: optional
+Architecture: amd64
+Maintainer: Eduard Berloso <eduard.bc.95@gmail.com>
+Description: Aplicació de sincronització de partides guardades de videojocs (Servidor).
+Depends: libc6 (>= 2.31), libgcc-s1
