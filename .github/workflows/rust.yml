@@ -82,7 +82,8 @@ jobs:
           chown -R builder:builder "$GITHUB_WORKSPACE"
 
       - name: Build PKGBUILD
-        run: make pkgbuild
+        run: |
+          sudo -u builder bash -c "cd $GITHUB_WORKSPACE/CliPG && make pkgbuild"
         working-directory: ./CliPG
 
       - name: Upload
