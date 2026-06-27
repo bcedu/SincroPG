@@ -51,10 +51,12 @@ rpm: build
 pkgbuild: build
 	rm -rf build/arch
 	mkdir -p build/arch
-	cp target/release/clipg build/arch/
-	cp packaging/arch/PKGBUILD build/arch/
-	cp packaging/shared/clipg.desktop build/arch/src/
-	cp packaging/shared/icons/png/clipg_inv_256.png build/arch/src/
+	cp target/release/clipg build/arch/clipg
+	cp packaging/arch/PKGBUILD build/arch/PKGBUILD
+	cp packaging/shared/clipg.desktop build/arch/clipg.desktop
+	cp packaging/shared/icons/png/clipg_inv_256.png build/arch/clipg.png
+	ls -ls build/arch/
+
 	cd build/arch && makepkg -f --noconfirm
 
 # -------------------------
