@@ -53,8 +53,8 @@ pkgbuild: build
 	mkdir -p build/arch
 	cp target/release/clipg build/arch/
 	cp packaging/arch/PKGBUILD build/arch/
-	cp packaging/shared/clipg.desktop build/arch/
-	cp packaging/shared/icons/png/clipg_inv_256.png build/arch/
+	cp packaging/shared/clipg.desktop build/arch/src/
+	cp packaging/shared/icons/png/clipg_inv_256.png build/arch/src/
 	cd build/arch && makepkg -f --noconfirm
 
 # -------------------------
