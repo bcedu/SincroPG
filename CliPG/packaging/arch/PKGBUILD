@@ -11,9 +11,9 @@ sha256sums=('SKIP')
 package() {
     install -Dm755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
 
-    install -Dm644 ../../packaging/shared/clipg.desktop \
+    install -Dm644 clipg.desktop \
         "$pkgdir/usr/share/applications/clipg.desktop"
 
-    install -Dm644 ../../packaging/shared/icons/png/clipg_inv_256.png \
+    install -Dm644 clipg_inv_256.png \
         "$pkgdir/usr/share/icons/hicolor/256x256/apps/clipg.png"
 }
