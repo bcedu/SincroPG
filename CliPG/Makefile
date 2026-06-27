@@ -12,9 +12,6 @@ build:
 	cp target/release/CliPG target/release/$(APP)
 
 
-build-msl:
-	cargo build --release --target x86_64-unknown-linux-musl
-
 # -------------------------
 # DEB
 # -------------------------
