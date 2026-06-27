@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   clipg-deb:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
@@ -41,8 +41,8 @@ jobs:
           path: ./CliPG/*.deb
 
   clipg-rpm:
-    runs-on: ubuntu-latest
-    container: fedora:latest
+    runs-on: ubuntu-24.04
+    container: fedora:42
 
     steps:
       - uses: actions/checkout@v4
@@ -67,7 +67,7 @@ jobs:
           path: ./CliPG/build/rpm/RPMS/**/*.rpm
 
   serpg-bin:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
@@ -91,7 +91,7 @@ jobs:
           path: ./SerPG/target/x86_64-unknown-linux-musl/release/SerPG
 
   serpg-deb:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
