@@ -38,7 +38,7 @@ jobs:
           sudo apt-get install -y musl-tools
 
       - name: Build CliPG (static MUSL)
-        run: make build
+        run: make build-msl
         working-directory: ./CliPG
 
       - name: Upload
