@@ -77,6 +77,9 @@ jobs:
       - name: Install deps
         run: |
           pacman -Sy --noconfirm base-devel rust cargo pkgconf gtk3 alsa-lib
+          useradd -m builder
+          echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          chown -R builder:builder "$GITHUB_WORKSPACE"
 
       - name: Build PKGBUILD
         run: make pkgbuild
