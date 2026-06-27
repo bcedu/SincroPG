@@ -57,6 +57,8 @@ pkgbuild: build
 	cp packaging/shared/icons/png/clipg_inv_256.png build/arch/clipg.png
 
 	cd build/arch && makepkg -f --noconfirm
+	mkdir -p dist/arch
+	cp build/arch/*.pkg.tar.* dist/arch/
 
 # -------------------------
 # CLEAN
