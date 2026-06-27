@@ -5,11 +5,11 @@ pkgdesc="CliPG application"
 arch=('x86_64')
 depends=('gtk3' 'glib2' 'alsa-lib')
 license=('MIT')
-source=("$pkgname")
+source=("$pkgname", "$pkgname.desktop", "$pkgname.png")
 sha256sums=('SKIP')
 
 package() {
     install -Dm755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
-    install -Dm644 "clipg.desktop" "$pkgdir/usr/share/applications/clipg.desktop"
-    install -Dm644 "clipg.png" "$pkgdir/usr/share/icons/hicolor/256x256/apps/clipg.png"
+    install -Dm644 "$pkgname.desktop" "$pkgdir/usr/share/applications/$pkgname.desktop"
+    install -Dm644 "$pkgname.png" "$pkgdir/usr/share/icons/hicolor/256x256/apps/$pkgname.png"
 }
