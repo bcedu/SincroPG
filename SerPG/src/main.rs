@@ -34,7 +34,7 @@ struct PartidaGuardadaAPI {
 #[derive(Debug, Deserialize, Serialize)]
 struct PartidaGuardadaContingutAPI {
     nom: String,
-    contingut: String,
+    contingut: Vec<u8>,
 }
 struct SerPG {
     pub router: Router,
@@ -144,10 +144,7 @@ impl SerPG {
             "{}/{}/{}",
             spg_state.videojocs_path, videojoc_id, partida_id
         );
-        let mut contingut = String::new();
-        let mut f = File::open(partida_path).unwrap();
-        f.read_to_string(&mut contingut).unwrap();
-        drop(f);
+        let contingut = fs::read(&partida_path).unwrap();
         Ok(Json(PartidaGuardadaContingutAPI {
             nom: partida_id,
             contingut,
@@ -188,7 +185,7 @@ impl SerPG {
             fs::create_dir(videojoc_path).unwrap();
         }
         let mut f = File::create(partida_path).unwrap();
-        f.write_all(partida_nova.contingut.as_bytes()).unwrap();
+        f.write_all(&partida_nova.contingut.to_vec()).unwrap();
         f.sync_all().unwrap();
         drop(f);
         Ok(())
@@ -365,7 +362,15 @@ pub mod tests {
     async fn test_api_get_partida_guardada() {
         let server = setup_server().await;
         let res = make_get_request("videojocs/Napoleón TW HD/partides/save3.txt/contingut").await;
-        let expected_res = "{\"nom\":\"save3.txt\",\"contingut\":\"Soc una partida guardada del Total War 40k\\nPartida 3\"}";
+        let contingut_bytes = "Soc una partida guardada del Total War 40k\nPartida 3"
+            .as_bytes()
+            .to_vec();
+        let contingut_str = contingut_bytes
+            .iter()
+            .map(|b| b.to_string())
+            .collect::<Vec<_>>()
+            .join(",");
+        let expected_res = format!(r#"{{"nom":"save3.txt","contingut":[{}]}}"#, contingut_str);
         assert_eq!(res, expected_res);
     }
     #[tokio::test]
@@ -384,7 +389,7 @@ pub mod tests {
             .to_string();
         let partida_test = PartidaGuardadaContingutAPI {
             nom: "save.txt".to_string(),
-            contingut: "@@".to_string(),
+            contingut: "@@".as_bytes().to_vec(),
         };
         make_post_request("videojocs/pastanaga bullida/partides", partida_test).await;
         let path = Path::new(&test_path);
@@ -409,7 +414,7 @@ pub mod tests {
             .to_string();
         let partida_test = PartidaGuardadaContingutAPI {
             nom: "save3.txt".to_string(),
-            contingut: "Partida4".to_string(),
+            contingut: "Partida4".as_bytes().to_vec(),
         };
         let original_content = "Soc una partida guardada del Total War 40k\nPartida 3";
         make_post_request("videojocs/Napoleón TW HD/partides", partida_test).await;

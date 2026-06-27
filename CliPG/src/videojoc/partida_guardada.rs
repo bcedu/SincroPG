@@ -72,7 +72,7 @@ impl PartidaGuardada {
     }
     pub fn descarregar_partida_guardada(&self, api: &Box<dyn PartidesGuardadesAPI>) {
         let contingut = api.get_partida_guardada(&self);
-        self.write_file_sync(contingut.as_str());
+        self.write_file_sync(&contingut);
     }
     pub fn duplicar_fitxer(&self, nou_nom: String) {
         let dir = self.path.parent().unwrap();
@@ -85,18 +85,13 @@ impl PartidaGuardada {
     pub fn eliminar_partida_guardada(&self) {
         fs::remove_file(&self.path).unwrap();
     }
-    pub fn write_file_sync(&self, content: &str) {
-        let mut f = fs::File::create(self.path.as_path()).unwrap();
-        f.write_all(content.as_bytes()).unwrap();
+    pub fn write_file_sync(&self, content: &[u8]) {
+        let mut f = fs::File::create(&self.path).unwrap();
+        f.write_all(content).unwrap();
         f.sync_all().unwrap();
-        drop(f);
     }
-    pub fn read_file_sync(&self) -> String {
-        let mut contingut = String::new();
-        let mut f = File::open(self.path.clone().as_path()).unwrap();
-        f.read_to_string(&mut contingut).unwrap();
-        drop(f);
-        contingut
+    pub fn read_file_sync(&self) -> Vec<u8> {
+        fs::read(&self.path).unwrap()
     }
 }
 
@@ -104,9 +99,16 @@ impl PartidaGuardada {
 pub mod tests {
     use super::*;
     use crate::videojoc::tests::get_fake_api;
-    fn get_partida_contingut_no_utf8() -> String {
+    fn get_partida_path_contingut_no_utf8_2() -> String {
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/fixtures_partida_guardada/contingut_no_utf8.save")
+            .join("tests/fixtures_partida_guardada/exemples de partides guardades/contingut_no_utf8_2.sav")
+            .to_str()
+            .unwrap()
+            .to_string()
+    }
+    fn get_partida_path_contingut_no_utf8() -> String {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures_partida_guardada/exemples de partides guardades/contingut_no_utf8.save")
             .to_str()
             .unwrap()
             .to_string()
@@ -190,7 +192,7 @@ pub mod tests {
         assert!(partida_remota.path.exists());
         // Verifiquem el contingut
         let content = partida_remota.read_file_sync();
-        assert_eq!(content, "Pastanaga Bullida\nPartida remota\n@#áçñÑ%");
+        assert_eq!(content, "Pastanaga Bullida\nPartida remota\n@#áçñÑ%".as_bytes());
         // Tornem a eliminar per deixarho com abans
         fs::remove_file(partida_remota.path).unwrap();
     }
@@ -200,15 +202,15 @@ pub mod tests {
         let partida_ja_existent = get_partida_ntw_s1();
         // Llegim el contingut original i verifiquem que es el que esperem
         let content = partida_ja_existent.read_file_sync();
-        assert_eq!(content, "Soc una partida guardada del Napoleon");
+        assert_eq!(content, "Soc una partida guardada del Napoleon".as_bytes());
         // Descarreguem la nova verZio que hi ha al servidor
         let api = get_fake_api();
         partida_ja_existent.descarregar_partida_guardada(&api);
         assert!(partida_ja_existent.path.exists());
         let content_nou = partida_ja_existent.read_file_sync();
-        assert_eq!(content_nou, "Contingut @ctualitzat!");
+        assert_eq!(content_nou, "Contingut @ctualitzat!".as_bytes());
         // Restaurem el contingut original
-        partida_ja_existent.write_file_sync(content.clone().as_str());
+        partida_ja_existent.write_file_sync(&content);
         // Ens assegurem que s'hagi restaurat be
         let content2 = partida_ja_existent.read_file_sync();
         assert_eq!(content2, content);
@@ -225,7 +227,19 @@ pub mod tests {
     }
     #[test]
     fn test_hash_no_utf8() {
-        let path_partida_no_utf8 = get_partida_contingut_no_utf8();
+        let path_partida_no_utf8 = get_partida_path_contingut_no_utf8();
         let p = PartidaGuardada::new(path_partida_no_utf8);
+    }
+    #[test]
+    fn test_llegir_contingut_no_utf8() {
+        let path_partida_no_utf8 = get_partida_path_contingut_no_utf8();
+        let p = PartidaGuardada::new(path_partida_no_utf8);
+        let content = p.read_file_sync();
+    }
+    #[test]
+    fn test_llegir_contingut_no_utf8_2() {
+        let path_partida_no_utf8 = get_partida_path_contingut_no_utf8_2();
+        let p = PartidaGuardada::new(path_partida_no_utf8);
+        let content = p.read_file_sync();
     }
 }

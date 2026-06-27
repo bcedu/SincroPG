@@ -12,7 +12,7 @@ pub trait PartidesGuardadesAPI {
     // GET /api/v1/videojocs/{videojoc_id}/partides
     fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada);
     // POST /api/v1/videojocs/{videojoc_id}/partides
-    fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String;
+    fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8>;
     // GET /api/v1/videojocs/{videojoc_id}/partides/{partida_id}/contingut
     fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada);
     // DELETE /api/v1/videojocs/{videojoc_id}/partides/{partida_id}
@@ -38,7 +38,7 @@ struct PartidaGuardadaAPI {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PartidaGuardadaContingutAPI {
     nom: String,
-    contingut: String,
+    contingut: Vec<u8>,
 }
 #[derive(Debug)]
 enum RTYPE {
@@ -152,7 +152,7 @@ impl PartidesGuardadesAPI for PgAPI {
         let request_url = format!("videojocs/{}/partides", partida_guardada.videojoc);
         self.make_post_request(request_url.as_str(), pa);
     }
-    fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
+    fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
         // GET /api/v1/videojocs/{videojoc_id}/partides/{partida_id}/contingut
         let request_url = self._get_partida_guardada(partida_guardada);
         let pg: PartidaGuardadaContingutAPI = self.make_get_request(request_url.as_str()).json().unwrap();
@@ -229,10 +229,13 @@ pub mod tests {
         for endpoint_part in url.split('/') {
             encoded = format!("{}/{}", encoded, encode(endpoint_part));
         }
+        let contingut_bytes = "Soc una partida guardada del Napoleón".as_bytes().to_vec();
+        let contingut_str = contingut_bytes.iter().map(|b| b.to_string()).collect::<Vec<_>>().join(",");
+        let expected_body = format!(r#"{{"nom":"save1.txt","contingut":[{}]}}"#, contingut_str);
         let _mock = server
             .mock("POST", encoded.as_str())
             .match_header("authorization", "Basic YWRtaW46cGFzdGFuYWdhYnVsbGlkYQ==")
-            .match_body(r#"{"nom":"save1.txt","contingut":"Soc una partida guardada del Napoleón"}"#)
+            .match_body(expected_body.as_str())
             .with_status(201)
             .expect(1)
             .create();
@@ -240,10 +243,10 @@ pub mod tests {
     }
     fn setup_fake_server_get_partida_guardada(nom_videojoc: String, nom_partida: String) -> mockito::ServerGuard {
         let (server, _mock) = get_fake_server(format!("videojocs/{nom_videojoc}/partides/{nom_partida}/contingut").as_str());
-        _mock
-            .with_header("content-type", "application/json")
-            .with_body(r#"{"nom":"save1.txt","contingut":"Pastanaga Bullida À@"}"#)
-            .create();
+        let contingut_bytes = "Pastanaga Bullida À@".as_bytes().to_vec();
+        let contingut_str = contingut_bytes.iter().map(|b| b.to_string()).collect::<Vec<_>>().join(",");
+        let expected_body = format!(r#"{{"nom":"save1.txt","contingut":[{}]}}"#, contingut_str);
+        _mock.with_header("content-type", "application/json").with_body(expected_body.as_str()).create();
         server
     }
     fn get_partida_path_ntw_s1() -> String {
@@ -311,6 +314,7 @@ pub mod tests {
         let server = setup_fake_server_get_partida_guardada(nom_videojoc.to_string(), partida.nom.to_str().unwrap().to_string());
         let pgapi = get_pg_api(server.url().clone());
         let content = pgapi.get_partida_guardada(&partida);
-        assert_eq!(content, "Pastanaga Bullida À@");
+        let expected = "Pastanaga Bullida À@".as_bytes().to_vec();
+        assert_eq!(content, expected);
     }
 }

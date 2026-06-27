@@ -229,8 +229,8 @@ pub mod tests {
             PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
-        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
-            "Pastanaga bullida@".to_string()
+        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
+            "Pastanaga bullida@".as_bytes().to_vec()
         }
     }
     pub struct FakeAPI_fase2;
@@ -258,8 +258,8 @@ pub mod tests {
             PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
-        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
-            "Pastanaga bullida@2 la venganza".to_string()
+        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
+            "Pastanaga bullida@2 la venganza".as_bytes().to_vec()
         }
     }
     pub struct FakeAPI_fase4;
@@ -287,8 +287,8 @@ pub mod tests {
             PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
-        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
-            "Pastanaga bullida@ 3 sl retrno".to_string()
+        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
+            "Pastanaga bullida@ 3 sl retrno".as_bytes().to_vec()
         }
     }
     pub struct FakeAPI_fase5;
@@ -325,8 +325,8 @@ pub mod tests {
             PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
-        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
-            "save 4 alt 2".to_string()
+        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
+            "save 4 alt 2".as_bytes().to_vec()
         }
     }
     pub struct FakeAPI_fase6 {
@@ -374,8 +374,8 @@ pub mod tests {
             PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
-        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
-            "save 4 alt 2".to_string()
+        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
+            "save 4 alt 2".as_bytes().to_vec()
         }
     }
     pub struct FakeAPI_fase7 {
@@ -423,8 +423,8 @@ pub mod tests {
             PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
-        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
-            "save 4 alt 22222222".to_string()
+        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
+            "save 4 alt 22222222".as_bytes().to_vec()
         }
     }
     fn get_dummy_cli_pg() -> CliPG {

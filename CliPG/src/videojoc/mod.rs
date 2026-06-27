@@ -256,11 +256,11 @@ pub mod tests {
         }
         fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
-        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> String {
+        fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
             if partida_guardada.nom == "save_remot.txt" {
-                "Pastanaga Bullida\nPartida remota\n@#áçñÑ%".to_string()
+                "Pastanaga Bullida\nPartida remota\n@#áçñÑ%".as_bytes().to_vec()
             } else {
-                "Contingut @ctualitzat!".to_string()
+                "Contingut @ctualitzat!".as_bytes().to_vec()
             }
         }
     }
@@ -360,13 +360,13 @@ pub mod tests {
                 let content2 = fs::read_to_string(&path).unwrap();
                 let content1 = fs::read_to_string(&local.path).unwrap();
                 assert_ne!(content1, content2);
-                assert_eq!(content2, contingut_original);
+                assert_eq!(content2.as_bytes().to_vec(), contingut_original);
                 // Aprofitem per eliminarlo
                 fs::remove_file(path).unwrap();
             }
         }
         assert_eq!(nfitxers_despres, 2);
-        local.write_file_sync(contingut_original.as_str());
+        local.write_file_sync(&contingut_original);
     }
     #[test]
     fn test_sync() {
