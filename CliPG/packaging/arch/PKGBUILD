@@ -9,7 +9,7 @@ source=("clipg" "clipg.desktop" "clipg.png")
 sha256sums=('SKIP' 'SKIP' 'SKIP')
 
 package() {
-    install -Dm755 "$pkgname" "$pkgdir/usr/bin/$pkgname"
-    install -Dm644 "$pkgname.desktop" "$pkgdir/usr/share/applications/$pkgname.desktop"
-    install -Dm644 "$pkgname.png" "$pkgdir/usr/share/icons/hicolor/256x256/apps/$pkgname.png"
+    install -Dm755 "$srcdir/clipg" "$pkgdir/usr/bin/clipg"
+    install -Dm644 "$srcdir/clipg.desktop" "$pkgdir/usr/share/applications/clipg.desktop"
+    install -Dm644 "$srcdir/clipg.png" "$pkgdir/usr/share/icons/hicolor/256x256/apps/clipg.png"
 }
