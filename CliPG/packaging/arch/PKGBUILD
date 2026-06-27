@@ -5,6 +5,8 @@ pkgdesc="CliPG application"
 arch=('x86_64')
 depends=('gtk3' 'glib2' 'alsa-lib')
 license=('MIT')
+source=("clipg" "clipg.desktop" "clipg.png")
+sha256sums=('SKIP' 'SKIP' 'SKIP')
 
 package() {
     install -Dm755 "$pkgname" "$pkgdir/usr/bin/$pkgname"
