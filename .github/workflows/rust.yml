@@ -66,6 +66,28 @@ jobs:
           name: rpm-clipg
           path: ./CliPG/build/rpm/RPMS/**/*.rpm
 
+  clipg-pkgbuild:
+    runs-on: ubuntu-24.04
+    container: archlinux:latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install deps
+        run: |
+          pacman -Sy --noconfirm base-devel rust cargo pkgconf gtk3 alsa-lib
+
+      - name: Build PKGBUILD
+        run: make pkgbuild
+        working-directory: ./CliPG
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: pkgbuild-clipg
+          path: dist/arch/*.pkg.tar.*
+
   serpg-bin:
     runs-on: ubuntu-24.04
 
@@ -124,7 +146,7 @@ jobs:
           path: ./SerPG/*.deb
 
   release:
-    needs: [clipg-deb, clipg-rpm, serpg-bin, serpg-deb]
+    needs: [clipg-deb, clipg-rpm, clipg-pkgbuild, serpg-bin, serpg-deb]
     runs-on: ubuntu-latest
 
     steps:

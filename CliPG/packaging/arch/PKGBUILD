@@ -1,0 +1,19 @@
+pkgname=clipg
+pkgver=2.16.3
+pkgrel=1
+pkgdesc="CliPG application"
+arch=('x86_64')
+depends=('gtk3' 'glib2' 'alsa-lib')
+license=('MIT')
+source=("$pkgname")
+sha256sums=('SKIP')
+
+package() {
+    install -Dm755 "$srcdir/$pkgname" "$pkgdir/usr/bin/$pkgname"
+
+    install -Dm644 ../../packaging/shared/clipg.desktop \
+        "$pkgdir/usr/share/applications/clipg.desktop"
+
+    install -Dm644 ../../packaging/shared/icons/png/clipg_inv_256.png \
+        "$pkgdir/usr/share/icons/hicolor/256x256/apps/clipg.png"
+}

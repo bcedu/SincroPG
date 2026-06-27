@@ -1,5 +1,5 @@
 Name: clipg
-Version: 2.15.0
+Version: 2.16.3
 Release: 1
 Summary: Aplicació de sincronització de partides guardades de videojocs (Client).
 

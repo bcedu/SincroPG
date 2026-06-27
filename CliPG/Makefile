@@ -1,5 +1,5 @@
 APP=clipg
-VERSION=2.15.0
+VERSION=2.16.3
 BUILD=target/release/$(APP)
 
 .PHONY: build deb rpm clean
@@ -20,7 +20,6 @@ deb: build
 	mkdir -p build/deb/usr/bin
 	mkdir -p build/deb/usr/share/applications
 	mkdir -p build/deb/usr/share/icons/hicolor/256x256/apps
-
 	cp $(BUILD) build/deb/usr/bin/$(APP)
 	cp packaging/deb/control build/deb/DEBIAN/control
 	cp packaging/shared/clipg.desktop build/deb/usr/share/applications/
@@ -45,6 +44,18 @@ rpm: build
 	rpmbuild \
 		--define "_topdir $(PWD)/build/rpm" \
 		-ba packaging/rpm/clipg.spec
+
+# -------------------------
+# PKGBUILD
+# -------------------------
+pkgbuild: build
+	rm -rf build/arch
+	mkdir -p build/arch
+	cp target/release/clipg build/arch/
+	cp packaging/arch/PKGBUILD build/arch/
+	cp packaging/shared/clipg.desktop build/arch/
+	cp packaging/shared/icons/png/clipg_inv_256.png build/arch/
+	cd build/arch && makepkg -f --noconfirm
 
 # -------------------------
 # CLEAN

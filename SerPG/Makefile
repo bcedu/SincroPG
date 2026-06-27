@@ -1,5 +1,5 @@
 APP=serpg
-VERSION=2.15.0
+VERSION=2.16.3
 BUILD=target/x86_64-unknown-linux-musl/release/SerPG
 
 .PHONY: build deb clean
