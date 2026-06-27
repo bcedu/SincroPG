@@ -59,7 +59,6 @@ pkgbuild: build
 	cd build/arch && makepkg -f --noconfirm
 	mkdir -p dist/arch
 	cp build/arch/*.pkg.tar.* dist/arch/
-	find .
 
 # -------------------------
 # CLEAN
