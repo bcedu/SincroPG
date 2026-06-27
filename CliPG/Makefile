@@ -55,7 +55,6 @@ pkgbuild: build
 	cp packaging/arch/PKGBUILD build/arch/PKGBUILD
 	cp packaging/shared/clipg.desktop build/arch/clipg.desktop
 	cp packaging/shared/icons/png/clipg_inv_256.png build/arch/clipg.png
-	ls -ls build/arch/
 
 	cd build/arch && makepkg -f --noconfirm
 

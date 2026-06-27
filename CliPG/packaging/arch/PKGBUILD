@@ -5,8 +5,6 @@ pkgdesc="CliPG application"
 arch=('x86_64')
 depends=('gtk3' 'glib2' 'alsa-lib')
 license=('MIT')
-source=()
-sha256sums=('SKIP')
 
 package() {
     install -Dm755 "$pkgname" "$pkgdir/usr/bin/$pkgname"
