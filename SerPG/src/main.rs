@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Json, Path, State},
+    extract::{DefaultBodyLimit, Json, Path, State},
     http::StatusCode,
     routing::{delete, get, post},
     Router,
@@ -61,6 +61,7 @@ impl SerPG {
                 "/api/v1/videojocs/{videojoc_id}/partides/{partida_id}/contingut",
                 get(Self::get_partida_guardada),
             )
+            .layer(DefaultBodyLimit::max(2 * 1024 * 1024 * 1024)) // 2 GiB
             .with_state(state);
         SerPG { router: r }
     }
