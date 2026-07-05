@@ -14,10 +14,17 @@ use std::sync::mpsc::{self, Receiver, Sender};
 const SOCKET_NAME: &str = "clipg_socket";
 
 /*
- * TODO:
- * - Si li dones a sincronitzar pero no estas conectat al servidor peta. S'hauria de controlar
- * - S'hauria de poder visualitzar eks videojocs que estan al servidor per afegirlos al client
- */
+* TODO:
+* - Si li dones a sincronitzar pero no estas conectat al servidor peta. S'hauria de controlar
+* - S'hauria de poder visualitzar eks videojocs que estan al servidor per afegirlos al client
+* - El post en comptes de passar els bytes podria apssar el binari. Segons el ChatGPT:
+"""
+Jo faria que el POST enviés el fitxer com a body binari (application/octet-stream) i
+passaria el nom de la partida a la URL o en una capçalera. El consum de memòria
+seria molt menor i podries sincronitzar fitxers grans sense inflar-los artificialment. Per un projecte
+com SincroPG, és una arquitectura bastant més adequada.
+"""
+*/
 
 #[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 enum AppMode {

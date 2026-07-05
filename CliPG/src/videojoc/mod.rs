@@ -172,12 +172,12 @@ impl Videojoc {
             // Pujem la partida remot pero renombrada al servidor;
             let mut remot = PartidaGuardada::from_partida_guardada(remot);
             remot.nom = OsString::from(nou_nom.clone());
-            api.post_partida_guardada(&remot);
+            remot.pujar_partida_guardada(api);
             remot.path.set_file_name(nou_nom);
             // La guardem en local tambe
             remot.descarregar_partida_guardada(api);
             // Pujem la partida local al servidor (aixo sobreescriu la que hi havia)
-            api.post_partida_guardada(&local);
+            local.pujar_partida_guardada(api);
         } else {
             // Creem una nova partida local amb el nom nou
             local.duplicar_fitxer(nou_nom);
@@ -254,7 +254,9 @@ pub mod tests {
             v.push(p6);
             v
         }
-        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Result<(), String> {
+            Ok(())
+        }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
             if partida_guardada.nom == "save_remot.txt" {

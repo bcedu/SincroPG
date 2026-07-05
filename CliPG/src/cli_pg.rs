@@ -225,8 +225,9 @@ pub mod tests {
             v.push(p1);
             v
         }
-        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Result<(), String> {
             PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
+            Ok(())
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
@@ -254,8 +255,9 @@ pub mod tests {
             v.push(p1);
             v
         }
-        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Result<(), String> {
             PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
+            Ok(())
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
@@ -283,8 +285,9 @@ pub mod tests {
             v.push(p1);
             v
         }
-        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Result<(), String> {
             PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
+            Ok(())
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
@@ -321,8 +324,9 @@ pub mod tests {
             v.push(p1);
             v
         }
-        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Result<(), String> {
             PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
+            Ok(())
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
@@ -370,8 +374,9 @@ pub mod tests {
             v.push(p1);
             v
         }
-        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Result<(), String> {
             PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
+            Ok(())
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
@@ -419,8 +424,9 @@ pub mod tests {
             v.push(p1);
             v
         }
-        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {
+        fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Result<(), String> {
             PgAPI::new("url".to_string(), "usuari".to_string(), "contrassenya".to_string())._post_partida_guardada(partida_guardada);
+            Ok(())
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {

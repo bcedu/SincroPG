@@ -10,7 +10,7 @@ pub trait PartidesGuardadesAPI {
     // GET /api/v1/videojocs
     fn get_partides_guardades(&self, videojoc: &Videojoc) -> Vec<PartidaGuardada>;
     // GET /api/v1/videojocs/{videojoc_id}/partides
-    fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada);
+    fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Result<(), String>;
     // POST /api/v1/videojocs/{videojoc_id}/partides
     fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8>;
     // GET /api/v1/videojocs/{videojoc_id}/partides/{partida_id}/contingut
@@ -146,11 +146,18 @@ impl PartidesGuardadesAPI for PgAPI {
         }
         partides
     }
-    fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) {
+    fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Result<(), String> {
         // POST /api/v1/videojocs/{videojoc_id}/partides
         let pa = self._post_partida_guardada(partida_guardada);
         let request_url = format!("videojocs/{}/partides", partida_guardada.videojoc);
-        self.make_post_request(request_url.as_str(), pa);
+        let response = self.make_post_request(request_url.as_str(), pa);
+        if response.status().is_success() {
+            Ok(())
+        } else {
+            let status = response.status();
+            let body = response.text().unwrap_or_default();
+            Err(format!("Error al sincronitzar {}: {}", status, body))
+        }
     }
     fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
         // GET /api/v1/videojocs/{videojoc_id}/partides/{partida_id}/contingut
@@ -304,7 +311,7 @@ pub mod tests {
         let (server, _mock) = setup_fake_server_post_partida_guardada(nom_videojoc.to_string());
         let pgapi = get_pg_api(server.url().clone());
         let partida = get_partida_ntw_s1();
-        pgapi.post_partida_guardada(&partida);
+        pgapi.post_partida_guardada(&partida).unwrap();
         _mock.assert();
     }
     #[test]

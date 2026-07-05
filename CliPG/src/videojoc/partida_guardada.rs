@@ -68,7 +68,7 @@ impl PartidaGuardada {
         hex::encode(hash_bytes)
     }
     pub fn pujar_partida_guardada(&self, api: &Box<dyn PartidesGuardadesAPI>) {
-        api.post_partida_guardada(&self);
+        api.post_partida_guardada(&self).unwrap();
     }
     pub fn descarregar_partida_guardada(&self, api: &Box<dyn PartidesGuardadesAPI>) {
         let contingut = api.get_partida_guardada(&self);
