@@ -9,7 +9,7 @@ pub trait PartidesGuardadesAPI {
     fn get_videojocs(&self) -> Vec<String>;
     // GET /api/v1/videojocs
     fn delete_videojoc(&self, videojoc: String);
-    // DELETE /api/v1/videojoc/{videojoc_id}
+    // DELETE /api/v1/videojocs/{videojoc_id}
     fn get_partides_guardades(&self, videojoc: &Videojoc) -> Vec<PartidaGuardada>;
     // GET /api/v1/videojocs/{videojoc_id}/partides
     fn post_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Result<(), String>;
@@ -135,7 +135,7 @@ impl PartidesGuardadesAPI for PgAPI {
     }
     fn delete_videojoc(&self, videojoc: String) {
         // DELETE /api/v1/videojoc/{videojoc_id}
-        let request_url = format!("videojoc/{videojoc}");
+        let request_url = format!("videojocs/{videojoc}");
         self.make_delete_request(request_url.as_str());
     }
     fn get_partides_guardades(&self, videojoc: &Videojoc) -> Vec<PartidaGuardada> {
