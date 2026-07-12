@@ -15,7 +15,6 @@ const SOCKET_NAME: &str = "clipg_socket";
 
 /*
 * TODO:
-* - Si li dones a sincronitzar pero no estas conectat al servidor peta. S'hauria de controlar
 * - S'hauria de poder visualitzar eks videojocs que estan al servidor per afegirlos al client
 * - El post en comptes de passar els bytes podria apssar el binari. Segons el ChatGPT:
 """
@@ -57,7 +56,9 @@ pub struct PgGUI {
     #[serde(skip)]
     clipg_config_path: Option<PathBuf>,
     #[serde(skip)]
-    current_mode: AppMode,
+    mode_actual: AppMode,
+    #[serde(skip)]
+    mode_anterior: AppMode,
     #[serde(skip)]
     estat_servidor: String,
     #[serde(skip)]
@@ -66,6 +67,10 @@ pub struct PgGUI {
     joc_afegit: String,
     #[serde(skip)]
     joc_afegit_nom: String,
+    #[serde(skip)]
+    videojocs_remots: Vec<String>,
+    #[serde(skip)]
+    videojocs_locals: Vec<Videojoc>,
     #[serde(skip)]
     quit_app: bool,
     #[serde(skip)]
@@ -88,11 +93,14 @@ impl Default for PgGUI {
     fn default() -> Self {
         Self {
             clipg_config_path: None,
-            current_mode: AppMode::Dashboard,
+            mode_actual: AppMode::Dashboard,
+            mode_anterior: AppMode::Dashboard,
             estat_servidor: String::new(),
             activitat: String::new(),
             joc_afegit: String::new(),
             joc_afegit_nom: String::new(),
+            videojocs_remots: Vec::new(),
+            videojocs_locals: Vec::new(),
             config_url: String::new(),
             config_usuari: String::new(),
             config_contrasenya: String::new(),
@@ -323,6 +331,11 @@ impl PgGUI {
         clipg.eliminar_joc(nom_joc.clone());
         self.activitat = format!("'{nom_joc}' eliminat correctament");
     }
+    fn eliminar_joc_remot(&mut self, joc: &String) {
+        let mut clipg = CliPG::default(self.clipg_config_path.clone());
+        clipg.eliminar_joc_remot(joc.clone());
+        self.activitat = format!("'{joc}' eliminat correctament del nuvol");
+    }
     fn afegir_joc(&mut self, path_joc: String, nom_joc: String) {
         let mut clipg = CliPG::default(self.clipg_config_path.clone());
         clipg.afegir_joc(path_joc, Some(nom_joc.clone()));
@@ -342,6 +355,10 @@ impl PgGUI {
             self.config_sincronitzar_al_tancar = loaded.config_sincronitzar_al_tancar;
             self.config_sincronitzar_cada_x_minuts = loaded.config_sincronitzar_cada_x_minuts;
         }
+    }
+    fn get_videojocs_remots(&mut self, ometre_viedojocs_locals: bool) -> Vec<String> {
+        let mut clipg = CliPG::default(self.clipg_config_path.clone());
+        clipg.get_videojocs_remots(ometre_viedojocs_locals)
     }
 }
 // Metodes amb components i contruccio de la UI
@@ -404,7 +421,7 @@ impl PgGUI {
         egui::menu::bar(ui, |ui| {
             ui.menu_button("Fitxer", |ui| {
                 if ui.button("Afegir joc").clicked() {
-                    self.current_mode = AppMode::EditarJoc;
+                    self.mode_actual = AppMode::EditarJoc;
                 }
                 if ui.button("Tancar i sortir").clicked() {
                     self.quit_app = true;
@@ -413,10 +430,19 @@ impl PgGUI {
             });
             ui.menu_button("Edita", |ui| {
                 if ui.button("Preferències").clicked() {
-                    self.current_mode = AppMode::Configuracio;
+                    self.mode_actual = AppMode::Configuracio;
                 }
             });
         });
+    }
+    fn setup_dashboard_prehook(&mut self) {
+        // Resetegem el llistat de videojocs locals a sincornitzar
+        let mut clipg = CliPG::default(self.clipg_config_path.clone());
+        clipg.load_local_jocs();
+        self.videojocs_locals.clear();
+        for v in clipg.vjocs {
+            self.videojocs_locals.push(Videojoc::from(&v));
+        }
     }
     fn setup_dashboard(&mut self, centered_ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         self.setup_dashboard_videojocs_habilitats(centered_ui);
@@ -429,7 +455,7 @@ impl PgGUI {
             egui::ScrollArea::vertical().show(group_ui, |scroll_ui| {
                 scroll_ui.horizontal(|row_ui| {
                     if Self::ui_button(row_ui, "+ Afegir joc").clicked() {
-                        self.current_mode = AppMode::EditarJoc;
+                        self.mode_actual = AppMode::EditarJoc;
                     }
                     row_ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |right_ui| {
                         if Self::ui_primary_button(right_ui, "🔄 Sincronitzar tots").clicked() {
@@ -438,22 +464,26 @@ impl PgGUI {
                     });
                 });
                 scroll_ui.add_space(10.0);
-                let mut clipg = CliPG::default(self.clipg_config_path.clone());
-                clipg.load_local_jocs();
-                for joc in clipg.vjocs.iter_mut() {
+                let mut videojocs_locals = Vec::new();
+                for joc in self.videojocs_locals.iter() {
+                    videojocs_locals.push(Videojoc::from(joc));
+                }
+                for joc in videojocs_locals.iter_mut() {
                     scroll_ui.horizontal(|row_ui| {
                         row_ui.strong(joc.nom.clone().to_str().unwrap());
                         row_ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |right_ui| {
                             if Self::ui_danger_secondary_button(right_ui, "🗑").clicked() {
                                 self.eliminar_joc(joc);
+                                self.setup_dashboard_prehook();
                             }
                             if Self::ui_secondary_button(right_ui, "🛠").clicked() {
                                 self.joc_afegit = joc.local_folder.clone().display().to_string();
                                 self.joc_afegit_nom = joc.nom.clone().into_string().unwrap();
-                                self.current_mode = AppMode::EditarJoc;
+                                self.mode_actual = AppMode::EditarJoc;
                             }
                             if Self::ui_primary_secondary_button(right_ui, "🔄").clicked() {
                                 self.sincronitzar_joc(joc);
+                                self.setup_dashboard_prehook();
                             }
                         });
                     });
@@ -477,7 +507,7 @@ impl PgGUI {
                 ui.colored_label(color, format!("{}", estat_servidor));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
                     if Self::ui_button(ui, "⚙ Editar").clicked() {
-                        self.current_mode = AppMode::Configuracio;
+                        self.mode_actual = AppMode::Configuracio;
                     }
                 });
             });
@@ -498,6 +528,7 @@ impl PgGUI {
             });
         });
     }
+    fn setup_configuracio_prehook(&mut self) {}
     fn setup_configuracio(&mut self, centered_ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         centered_ui.add_space(10.0);
         Self::ui_card(centered_ui, Some("⚙ Configuració"), |group_ui| {
@@ -538,12 +569,12 @@ impl PgGUI {
                         if Self::ui_primary_button(ui, "Desar").clicked() {
                             self.guardar_configuracio(self.config_url.clone(), self.config_usuari.clone(), self.config_contrasenya.clone(), _frame.storage_mut().unwrap());
                             self.estat_servidor = String::new();
-                            self.current_mode = AppMode::Dashboard;
+                            self.mode_actual = AppMode::Dashboard;
                         }
                         if Self::ui_danger_button(ui, "Cancel·lar").clicked() {
                             self.restaurar_configuracio(_frame.storage_mut().unwrap());
                             self.estat_servidor = String::new();
-                            self.current_mode = AppMode::Dashboard;
+                            self.mode_actual = AppMode::Dashboard;
                         }
                     });
                 });
@@ -574,18 +605,22 @@ impl PgGUI {
                         if Self::ui_primary_button(ui, "Desar").clicked() {
                             self.guardar_configuracio(self.config_url.clone(), self.config_usuari.clone(), self.config_contrasenya.clone(), _frame.storage_mut().unwrap());
                             self.estat_servidor = String::new();
-                            self.current_mode = AppMode::Dashboard;
+                            self.mode_actual = AppMode::Dashboard;
                         }
                         if Self::ui_danger_button(ui, "Cancel·lar").clicked() {
                             self.restaurar_configuracio(_frame.storage_mut().unwrap());
                             self.estat_servidor = String::new();
-                            self.current_mode = AppMode::Dashboard;
+                            self.mode_actual = AppMode::Dashboard;
                         }
                     });
                 });
             });
             group_ui.add_space(10.0);
         });
+    }
+    fn setup_editar_joc_prehook(&mut self) {
+        // Resetegem el llistat de videojocs disponibles al nuvol
+        self.videojocs_remots = self.get_videojocs_remots(true)
     }
     fn setup_editar_joc(&mut self, centered_ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         centered_ui.add_space(10.0);
@@ -627,17 +662,48 @@ impl PgGUI {
                             self.afegir_joc(self.joc_afegit.clone(), self.joc_afegit_nom.clone());
                             self.joc_afegit = String::new();
                             self.joc_afegit_nom = String::new();
-                            self.current_mode = AppMode::Dashboard;
+                            self.mode_actual = AppMode::Dashboard;
                         }
                         if Self::ui_danger_button(ui, "Cancel·lar").clicked() {
                             self.joc_afegit = String::new();
                             self.joc_afegit_nom = String::new();
-                            self.current_mode = AppMode::Dashboard;
+                            self.mode_actual = AppMode::Dashboard;
                         }
                     });
                 });
             });
             group_ui.add_space(10.0);
+        });
+        centered_ui.add_space(10.0);
+
+        Self::ui_card(centered_ui, Some("☁ Disponibles al núvol"), |group_ui| {
+            egui::ScrollArea::vertical().show(group_ui, |scroll_ui| {
+                let mut videojocs_remots = Vec::new();
+                for joc in self.videojocs_remots.iter() {
+                    videojocs_remots.push(joc.clone());
+                }
+                for joc in videojocs_remots.iter() {
+                    scroll_ui.horizontal(|row_ui| {
+                        row_ui.strong(joc.clone());
+                        row_ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |right_ui| {
+                            let eliminar_response = Self::ui_danger_secondary_button(right_ui, "🗑");
+                            egui::Popup::from_toggle_button_response(&eliminar_response).show(|ui| {
+                                ui.label("Eliminar tota la informacio del joc guardada al nuvol?");
+                                ui.label("(Atenció, aquesta opció no es pot desfer!)");
+                                ui.add_space(10.0);
+                                if Self::ui_danger_button(ui, "Eliminar").clicked() {
+                                    self.eliminar_joc_remot(joc);
+                                    self.setup_editar_joc_prehook();
+                                }
+                            });
+                            if Self::ui_primary_secondary_button(right_ui, "➕").clicked() {
+                                self.joc_afegit_nom = joc.clone();
+                            }
+                        });
+                    });
+                    scroll_ui.separator();
+                }
+            });
         });
     }
 }
@@ -655,14 +721,26 @@ impl eframe::App for PgGUI {
             main_ui.vertical_centered(|main_vertical_ui| {
                 main_vertical_ui.with_layout(egui::Layout::top_down(egui::Align::Center), |centered_ui| {
                     centered_ui.set_width(700.0);
-                    match self.current_mode {
+                    match self.mode_actual {
                         AppMode::Dashboard => {
+                            if self.mode_anterior != AppMode::Dashboard || self.videojocs_locals.is_empty() {
+                                self.setup_dashboard_prehook();
+                                self.mode_anterior = AppMode::Dashboard;
+                            }
                             self.setup_dashboard(centered_ui, _frame);
                         }
                         AppMode::Configuracio => {
+                            if self.mode_anterior != AppMode::Configuracio {
+                                self.setup_configuracio_prehook();
+                                self.mode_anterior = AppMode::Configuracio;
+                            }
                             self.setup_configuracio(centered_ui, _frame);
                         }
                         AppMode::EditarJoc => {
+                            if self.mode_anterior != AppMode::EditarJoc {
+                                self.setup_editar_joc_prehook();
+                                self.mode_anterior = AppMode::EditarJoc;
+                            }
                             self.setup_editar_joc(centered_ui, _frame);
                         }
                     };

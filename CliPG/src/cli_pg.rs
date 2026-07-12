@@ -99,6 +99,9 @@ impl CliPG {
         }
         if trobat { Ok(()) } else { Err(format!("\"{}\" no era un joc habilitat.", videojoc_id)) }
     }
+    pub fn eliminar_joc_remot(&mut self, videojoc_id: String) {
+        self.api.delete_videojoc(videojoc_id.clone());
+    }
     fn get_config_path() -> PathBuf {
         let proj_dirs = ProjectDirs::from("com", "bcedu", "CliPG").expect("No s'han pogut obtenir els directoris");
         proj_dirs.config_dir().join("config.toml")
@@ -192,6 +195,22 @@ impl CliPG {
         self.config = new_config;
         res.to_string()
     }
+    pub fn get_videojocs_remots(&mut self, ometre_viedojocs_locals: bool) -> Vec<String> {
+        let mut res = Vec::new();
+        let mut videojocs_locals = Vec::new();
+        if ometre_viedojocs_locals {
+            self.load_local_jocs();
+            for v in self.vjocs.iter() {
+                videojocs_locals.push(v.nom.clone().to_str().unwrap().to_string());
+            }
+        }
+        for v in self.api.get_videojocs() {
+            if videojocs_locals.is_empty() || !videojocs_locals.contains(&v) {
+                res.push(v);
+            }
+        }
+        res
+    }
 }
 
 #[cfg(test)]
@@ -230,6 +249,7 @@ pub mod tests {
             Ok(())
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn delete_videojoc(&self, videojoc: String) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
             "Pastanaga bullida@".as_bytes().to_vec()
         }
@@ -260,6 +280,7 @@ pub mod tests {
             Ok(())
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn delete_videojoc(&self, videojoc: String) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
             "Pastanaga bullida@2 la venganza".as_bytes().to_vec()
         }
@@ -290,6 +311,7 @@ pub mod tests {
             Ok(())
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn delete_videojoc(&self, videojoc: String) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
             "Pastanaga bullida@ 3 sl retrno".as_bytes().to_vec()
         }
@@ -329,6 +351,7 @@ pub mod tests {
             Ok(())
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn delete_videojoc(&self, videojoc: String) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
             "save 4 alt 2".as_bytes().to_vec()
         }
@@ -379,6 +402,7 @@ pub mod tests {
             Ok(())
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn delete_videojoc(&self, videojoc: String) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
             "save 4 alt 2".as_bytes().to_vec()
         }
@@ -429,6 +453,7 @@ pub mod tests {
             Ok(())
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn delete_videojoc(&self, videojoc: String) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
             "save 4 alt 22222222".as_bytes().to_vec()
         }

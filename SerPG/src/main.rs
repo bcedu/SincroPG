@@ -54,6 +54,10 @@ impl SerPG {
                 get(Self::get_partides_guardades).post(Self::post_partida_guardada),
             )
             .route(
+                "/api/v1/videojocs/{videojoc_id}",
+                delete(Self::delete_videojoc),
+            )
+            .route(
                 "/api/v1/videojocs/{videojoc_id}/partides/{partida_id}",
                 delete(Self::delete_partida_guardada),
             )
@@ -150,6 +154,19 @@ impl SerPG {
             nom: partida_id,
             contingut,
         }))
+    }
+    async fn delete_videojoc(
+        AuthBasic((user, pass)): AuthBasic,
+        State(spg_state): State<SerPGState>,
+        Path(videojoc_id): Path<String>,
+    ) -> Result<(), StatusCode> {
+        println!("DELETE /api/v1/videojocs/{videojoc_id}");
+        Self::check_auth(user, pass, &spg_state)?;
+        let videojoc_path = format!("{}/{}", spg_state.videojocs_path, videojoc_id);
+        if PathBuf::from(&videojoc_path).exists() {
+            std::fs::remove_dir_all(videojoc_path).unwrap();
+        }
+        Ok(())
     }
     async fn delete_partida_guardada(
         AuthBasic((user, pass)): AuthBasic,

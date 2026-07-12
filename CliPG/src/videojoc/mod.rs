@@ -258,6 +258,7 @@ pub mod tests {
             Ok(())
         }
         fn delete_partida_guardada(&self, partida_guardada: &PartidaGuardada) {}
+        fn delete_videojoc(&self, videojoc: String) {}
         fn get_partida_guardada(&self, partida_guardada: &PartidaGuardada) -> Vec<u8> {
             if partida_guardada.nom == "save_remot.txt" {
                 "Pastanaga Bullida\nPartida remota\n@#áçñÑ%".as_bytes().to_vec()
