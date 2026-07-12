@@ -696,9 +696,6 @@ impl PgGUI {
                                     self.setup_editar_joc_prehook();
                                 }
                             });
-                            if Self::ui_primary_secondary_button(right_ui, "➕").clicked() {
-                                self.joc_afegit_nom = joc.clone();
-                            }
                         });
                     });
                     scroll_ui.separator();
