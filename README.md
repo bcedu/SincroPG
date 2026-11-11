@@ -91,8 +91,9 @@ chmod +x CliPG
 
 ### Windows
 
-No disponible actualment.
+Descarrega el fitxer corresponent des de la pàgina de releases:
 
+https://github.com/bcedu/SincroPG/releases
 
 ### macOS
 
