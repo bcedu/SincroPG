@@ -118,6 +118,42 @@ jobs:
           name: pkgbuild-clipg
           path: ./CliPG/dist/arch/*.pkg.tar.*
 
+  clipg-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build CliPG
+        run: cargo build --release --locked --manifest-path CliPG/Cargo.toml
+
+      - name: Prepare ZIP
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path CliPG/Cargo.toml -Pattern '^version\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
+          $dir = "CliPG-$version-windows-x64"
+
+          New-Item -ItemType Directory -Path $dir | Out-Null
+
+          Copy-Item "CliPG/target/release/CliPG.exe" "$dir/CliPG.exe"
+          Copy-Item "LICENSE" "$dir/LICENSE"
+
+          @"
+          CliPG $version - Windows x64
+
+          Extract this ZIP and run CliPG.exe.
+          "@ | Set-Content "$dir/README.txt" -Encoding UTF8
+
+          Compress-Archive -Path "$dir/*" -DestinationPath "$dir.zip"
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: clipg-windows
+          path: CliPG-*-windows-x64.zip
+
   serpg-bin:
     runs-on: ubuntu-24.04
 
@@ -177,7 +213,7 @@ jobs:
 
   release:
     needs:
-      [clipg-bin, clipg-deb, clipg-rpm, clipg-pkgbuild, serpg-bin, serpg-deb]
+      [clipg-bin, clipg-deb, clipg-rpm, clipg-pkgbuild, clipg-windows, serpg-bin, serpg-deb]
     runs-on: ubuntu-latest
 
     steps:
