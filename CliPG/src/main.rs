@@ -3,11 +3,12 @@ use CliPG::pg_gui::PgGUI;
 use clap::{Arg, Command};
 
 fn main() {
+    let no_args = std::env::args_os().len() == 1;
     let matches = Command::new("CliPG")
         .version("1.0")
         .author("Bcedu")
         .about("Pastanaga Bullida")
-        .arg_required_else_help(true) // Mostra ajuda si no hi ha arguments
+        .arg_required_else_help(!cfg!(windows))
         .arg(
             Arg::new("list")
                 .short('l')
@@ -54,7 +55,7 @@ fn main() {
         )
         .get_matches();
 
-    if matches.get_flag("gui") {
+    if matches.get_flag("gui") || (cfg!(windows) && no_args) {
         PgGUI::start_pg_gui(None);
     } else {
         let mut clipg = CliPG_class::default(None);
