@@ -127,6 +127,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Build CliPG
+        env:
+          RUSTFLAGS: "-C target-feature=+crt-static"
         run: cargo build --release --locked --manifest-path CliPG/Cargo.toml
 
       - name: Prepare ZIP
